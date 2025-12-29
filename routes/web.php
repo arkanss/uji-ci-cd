@@ -28,6 +28,9 @@ Route::get('/purchase-orders', App\Livewire\PurchaseOrder\PurchaseOrderIndex::cl
 //products
 Route::get('/products', App\Livewire\Product\ProductIndex::class)->name('products.index');
 
+//product rewards
+Route::get('/product-rewards', App\Livewire\Product\ProductRewardsIndex::class)->name('product-rewards.index');
+
 //admin management
 Route::get('/admins', App\Livewire\Admin\AdminIndex::class)->name('admin.index');
 
