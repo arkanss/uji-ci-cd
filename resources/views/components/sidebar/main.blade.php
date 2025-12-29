@@ -67,7 +67,10 @@
             </flux:sidebar.item>
 
             <flux:sidebar.item icon="arrows-right-left">Product Distribution</flux:sidebar.item>
-            <flux:sidebar.item icon="gift">Product Rewards</flux:sidebar.item>
+            <flux:sidebar.item icon="gift" href="{{ route('product-rewards.index') }}"
+                :current="request()->routeIs('product-rewards.index')">
+                Product Rewards
+            </flux:sidebar.item>
             <flux:sidebar.item icon="clock">Product Stock Histories</flux:sidebar.item>
         </flux:sidebar.group>
 
