@@ -23,10 +23,14 @@
             @else
                 @yield('content')
             @endif
+
+            @yield('scripts')
         </main>
     </div>
 
     @fluxScripts
+    {{-- <script src="https://unpkg.com/html5-qrcode"></script> --}}
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
 </body>
 
 

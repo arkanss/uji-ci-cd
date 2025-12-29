@@ -15,11 +15,11 @@
 
         <div
             class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[1200px]">
+            <table class="w-full text-left border-collapse">
                 <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                     <tr>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Product</th>
-                        <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase text-right">Price</th>
+                        <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Price</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Category</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Code</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">SKU</th>
@@ -34,7 +34,7 @@
                             <td class="px-4 py-3">
                                 <span class="text-sm font-medium">{{ $product->name }}</span>
                             </td>
-                            <td class="px-4 py-3 text-sm text-right font-mono">
+                            <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                                 Rp {{ number_format($product->price, 0, ',', '.') }}
                             </td>
                             <td class="px-4 py-3 text-sm">
@@ -182,16 +182,35 @@
                                 <div class="space-y-2">
                                     <flux:label>Price</flux:label>
 
-                                    <flux:input.group>
-                                        <flux:input.group.prefix class="font-semibold">
-                                            IDR
-                                        </flux:input.group.prefix>
+                                    <div x-data="{
+                                        rawPrice: @entangle('form.price'),
+                                    
+                                        get formatted() {
+                                            if (!this.rawPrice) return '';
+                                            return this.rawPrice
+                                                .toString()
+                                                .replace(/\D/g, '')
+                                                .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        },
+                                    
+                                        updateValue(e) {
+                                            let val = e.target.value.replace(/\D/g, '');
+                                            this.rawPrice = val;
+                                        }
+                                    }">
+                                        <flux:input.group>
+                                            <flux:input.group.prefix class="font-semibold">
+                                                Rp
+                                            </flux:input.group.prefix>
 
-                                        <flux:input type="number" wire:model="form.price" placeholder="0" />
-                                    </flux:input.group>
+                                            <flux:input type="text" placeholder="0" x-bind:value="formatted"
+                                                x-on:input="updateValue($event)" />
+                                        </flux:input.group>
+                                    </div>
 
                                     <flux:error name="form.price" />
                                 </div>
+
                                 <div class="space-y-2">
                                     <flux:label>Discount</flux:label>
                                     <flux:input type="number" wire:model="form.discount" placeholder="0" />
@@ -262,10 +281,11 @@
                                 <flux:error name="form.level_medal_id" />
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                                <flux:label>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                                <flux:label class="pt-1">
                                     Scope Service <span class="text-red-500">*</span>
                                 </flux:label>
+
                                 <div class="md:col-span-3">
                                     <div x-data="{
                                         selected: @entangle('form.scope_service'),
@@ -280,24 +300,29 @@
                                                 this.selected.push(value)
                                         }
                                     }" class="flex flex-wrap gap-2">
+
                                         <template x-for="option in options" :key="option.value">
                                             <button type="button" @click="toggle(option.value)"
                                                 :class="selected.includes(option.value) ?
-                                                    'bg-blue-600 text-white' :
-                                                    'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'"
-                                                class="px-3 py-1 rounded-full text-xs font-medium rounded-full transition">
+                                                    'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-200' :
+                                                    'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-800'"
+                                                class="px-4 py-1.5 text-xs font-medium rounded-full border transition focus:outline-none">
                                                 <span x-text="option.label"></span>
                                             </button>
                                         </template>
                                     </div>
+
                                     <flux:error name="form.scope_service" />
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div class="md:col-span-3 md:col-start-2">
-                                    <flux:label>Scope Type</flux:label>
 
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                                <flux:label class="pt-1">
+                                    Scope Type
+                                </flux:label>
+
+                                <div class="md:col-span-3">
                                     <div x-data="{
                                         selected: @entangle('form.scope_type'),
                                         options: [
@@ -311,16 +336,18 @@
                                                 this.selected.push(value)
                                         }
                                     }" class="flex flex-wrap gap-2">
+
                                         <template x-for="option in options" :key="option.value">
                                             <button type="button" @click="toggle(option.value)"
                                                 :class="selected.includes(option.value) ?
-                                                    'bg-blue-600 text-white' :
-                                                    'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'"
-                                                class="px-3 py-1 rounded-full text-xs font-medium transition">
+                                                    'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-200' :
+                                                    'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-800'"
+                                                class="px-4 py-1.5 text-xs font-medium rounded-full border transition focus:outline-none">
                                                 <span x-text="option.label"></span>
                                             </button>
                                         </template>
                                     </div>
+
                                     <flux:error name="form.scope_type" />
                                 </div>
                             </div>

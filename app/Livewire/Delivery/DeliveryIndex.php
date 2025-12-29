@@ -25,14 +25,22 @@ class DeliveryIndex extends Component
 
     public function render()
     {
-        $deliveries = ProductDistributionDeliver::with(['driver', 'distributions'])
+        $deliveries = ProductDistributionDeliver::with([
+                'driver',
+                'distributions.requester',
+                'distributions.verifier',
+            ])
             ->orderByDesc('date')
             ->paginate(10);
 
-        $selectedDelivery = $this->selectedDeliveryId 
-            ? ProductDistributionDeliver::with(['driver', 'distributions.merchant', 'distributions.product'])
-                ->find($this->selectedDeliveryId) 
+        $selectedDelivery = $this->selectedDeliveryId
+            ? ProductDistributionDeliver::with([
+                'driver',
+                'distributions.requester',
+                'distributions.verifier',
+            ])->find($this->selectedDeliveryId)
             : null;
+
 
         return view('livewire.delivery.delivery-index', [
             'deliveries' => $deliveries,
