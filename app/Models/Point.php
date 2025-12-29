@@ -25,6 +25,8 @@ class Point extends Model
         'name',
         'abbr',
         'value_idr',
+        'description',
+        'value_parent',
         'parent_id',
         'status',
         'is_exchangeable',
@@ -34,6 +36,7 @@ class Point extends Model
     protected $casts = [
         'id' => 'string',
         'value_idr' => 'decimal:3',
+        'value_parent' => 'decimal:3',
         'is_exchangeable' => 'boolean',
         'status' => PointStatusEnum::class,
         'scope_service' => 'array'

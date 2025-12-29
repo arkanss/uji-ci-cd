@@ -69,10 +69,16 @@
                                 @endif
                             </td>
 
-                            <td class="px-4 py-3 text-right">
+                            <td class="px-4 py-3 text-right flex justify-end gap-2">
                                 <flux:button variant="ghost" size="sm" icon="eye"
                                     wire:click="showDetail('{{ $order->id }}')" />
+
+                                @if ($order->latestPayment())
+                                    <flux:button variant="ghost" size="sm" icon="credit-card"
+                                        wire:click="showPayment('{{ $order->id }}')" />
+                                @endif
                             </td>
+
                         </tr>
                     @empty
                         <tr>
@@ -183,14 +189,22 @@
                                         </td>
                                         <td class="px-4 py-3 text-center">
                                             @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Requested)
-                                                <span class="text-zinc-400 italic text-xs">Waiting...</span>
+                                                <flux:input type="number" min="0"
+                                                    :max="$item->requested_stock"
+                                                    wire:model.defer="approvedStocks.{{ $item->id }}"
+                                                    class="w-20 text-center" />
+                                                <p class="text-[10px] text-zinc-400">
+                                                    Max: {{ $item->requested_stock }}
+                                                </p>
                                             @else
                                                 <span
-                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold
+                                                        bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                                                     {{ $item->approved_stock ?? 0 }}
                                                 </span>
                                             @endif
                                         </td>
+
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -212,22 +226,141 @@
             </div>
 
             <div
-                class="p-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-end gap-3 rounded-b-lg">
+                class="p-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap justify-end gap-3 rounded-b-lg">
+
                 <flux:modal.close>
                     <flux:button variant="ghost" size="sm">Tutup</flux:button>
                 </flux:modal.close>
 
                 @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Requested)
                     <flux:modal.trigger name="reject-modal">
-                        <flux:button variant="danger" size="sm" icon="x-mark">Tolak</flux:button>
+                        <flux:button variant="danger" size="sm" icon="x-mark">
+                            Tolak
+                        </flux:button>
                     </flux:modal.trigger>
 
                     <flux:button variant="primary" size="sm" icon="check"
-                        wire:click="verifyOrder('{{ $selectedOrder->id }}')"
-                        wire:confirm="Setujui dan verifikasi pesanan ini?">
-                        Verifikasi Pesanan
+                        wire:click="verifyOrder('{{ $selectedOrder->id }}')" wire:confirm="Verifikasi pesanan ini?">
+                        Verifikasi
                     </flux:button>
                 @endif
+
+                @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Verified)
+                    <flux:button variant="primary" color="blue" size="sm" icon="arrow-path"
+                        wire:click="markAsProcessing('{{ $selectedOrder->id }}')">
+                        Processing
+                    </flux:button>
+                @endif
+
+                @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Processing)
+                    <div class="flex items-center gap-2">
+                        <flux:select wire:model="selectedDriverId" placeholder="Pilih Driver" class="min-w-[180px]">
+                            @foreach ($this->drivers as $driver)
+                                <option value="{{ $driver->id }}">
+                                    {{ $driver->name }}
+                                </option>
+                            @endforeach
+                        </flux:select>
+
+                        <flux:button variant="primary" size="sm" icon="user-plus"
+                            wire:click="assignDriverAndProcess('{{ $selectedOrder->id }}')">
+                            Assign Driver
+                        </flux:button>
+                    </div>
+                @endif
+
+                @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Processed)
+                    <flux:button variant="primary" color="blue" size="sm" icon="truck"
+                        wire:click="markAsDelivering('{{ $selectedOrder->id }}')">
+                        Delivering
+                    </flux:button>
+                @endif
+
+                @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Delivering)
+                    <flux:button variant="primary" color="green" size="sm" icon="check-circle"
+                        wire:click="markAsDelivered('{{ $selectedOrder->id }}')">
+                        Delivered
+                    </flux:button>
+                @endif
+            </div>
+
+        @endif
+    </flux:modal>
+
+    <flux:modal name="payment-modal" class="md:w-[600px] space-y-6">
+        @if ($selectedOrder)
+            <div>
+                <flux:heading>Payment History</flux:heading>
+                <flux:subheading>{{ $selectedOrder->code }}</flux:subheading>
+            </div>
+
+            <div class="space-y-4">
+                @forelse ($selectedOrder->payments as $payment)
+                    <div class="border rounded-lg p-4 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm font-semibold">
+                                    Amount: Rp {{ number_format($payment->amount, 0, ',', '.') }}
+                                </p>
+                                <p class="text-xs text-zinc-500">
+                                    {{ $payment->created_at->format('d M Y, H:i') }}
+                                </p>
+                            </div>
+
+                            <flux:badge :color="$payment->status?->color()" variant="subtle">
+                                {{ $payment->status?->label() }}
+                            </flux:badge>
+                        </div>
+
+                        @if ($payment->proof_of_payment)
+                            @php
+                                $proof = $payment->proof_of_payment;
+                                if (
+                                    is_string($proof) &&
+                                    (str_starts_with($proof, 'http://') || str_starts_with($proof, 'https://'))
+                                ) {
+                                    $src = $proof;
+                                } else {
+                                    try {
+                                        $disk = env('FILESYSTEM_DISK', 'public');
+                                        $src = \Illuminate\Support\Facades\Storage::disk($disk)->url(
+                                            ltrim($proof, '/'),
+                                        );
+                                    } catch (\Throwable $e) {
+                                        $src = asset('storage/' . ltrim($proof, '/'));
+                                    }
+                                }
+                            @endphp
+
+                            <img src="{{ $src }}" class="rounded border max-h-48" />
+                        @endif
+
+                        @if ($payment->status === \App\Enums\ProductDistributionPaymentStatusEnum::Rejected)
+                            <p class="text-xs text-red-600 italic">
+                                Alasan: {{ $payment->reject_reason }}
+                            </p>
+                        @endif
+
+                        @if ($verifiablePayment && $payment->id === $verifiablePayment->id)
+                            <flux:textarea wire:model="paymentRejectReason"
+                                placeholder="Alasan penolakan (jika ada)" />
+
+                            <div class="flex justify-end gap-2">
+                                <flux:button variant="danger" wire:click="rejectPayment">
+                                    Reject
+                                </flux:button>
+
+                                <flux:button variant="primary" color="green" wire:click="approvePayment">
+                                    Approve
+                                </flux:button>
+                            </div>
+                        @endif
+                    </div>
+                @empty
+                    <p class="text-sm text-zinc-500 italic">
+                        Belum ada data pembayaran.
+                    </p>
+                @endforelse
             </div>
         @endif
     </flux:modal>

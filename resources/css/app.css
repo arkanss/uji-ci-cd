@@ -32,3 +32,23 @@
         --color-accent-foreground: var(--color-white);
     }
 }
+
+#qr-reader {
+    position: relative;
+    width: 260px;
+    height: 260px;
+}
+
+#qr-reader * {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+}
+
+#qr-reader video,
+#qr-reader canvas {
+    object-fit: cover !important;
+    position: absolute !important;
+    inset: 0;
+}

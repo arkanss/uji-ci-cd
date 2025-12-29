@@ -23,8 +23,21 @@ class ProductCategoryIndex extends Component
     public $image; 
     public $editingCategoryId = null;
     public $oldImage = null; 
+    public $categoryIdBeingDeleted = null; 
 
     protected $queryString = ['search' => ['except' => '']];
+
+    public function create()
+    {
+        $this->resetForm();
+        $this->modal('category-modal')->show();
+    }
+
+    public function resetForm()
+    {
+        $this->reset(['name', 'description', 'image', 'editingCategoryId', 'oldImage', 'categoryIdBeingDeleted']);
+        $this->resetValidation();
+    }
 
     public function save()
     {
@@ -62,6 +75,7 @@ class ProductCategoryIndex extends Component
 
     public function edit($id)
     {
+        $this->resetForm();
         $category = ProductCategory::findOrFail($id);
         $this->editingCategoryId = $id;
         $this->name = $category->name;
@@ -71,19 +85,25 @@ class ProductCategoryIndex extends Component
         $this->modal('category-modal')->show();
     }
 
-    public function delete($id)
+    public function confirmDelete($id)
     {
-        $category = ProductCategory::findOrFail($id);
-        if ($category->image) {
-            Storage::disk('public')->delete($category->image);
-        }
-        $category->delete();
+        $this->categoryIdBeingDeleted = $id;
+        $this->modal('delete-category-modal')->show();
     }
 
-    public function resetForm()
+    public function delete()
     {
-        $this->reset(['name', 'description', 'image', 'editingCategoryId', 'oldImage']);
-        $this->resetValidation();
+        if ($this->categoryIdBeingDeleted) {
+            $category = ProductCategory::findOrFail($this->categoryIdBeingDeleted);
+            
+            if ($category->image) {
+                Storage::disk('public')->delete($category->image);
+            }
+            
+            $category->delete();
+            $this->modal('delete-category-modal')->close();
+            $this->categoryIdBeingDeleted = null;
+        }
     }
 
     public function render()

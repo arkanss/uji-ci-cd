@@ -42,3 +42,29 @@ Route::get('/delivery', App\Livewire\Delivery\DeliveryIndex::class)->name('deliv
 
 //stock
 Route::get('/stock', App\Livewire\Stock\StockIndex::class)->name('stock.index');
+
+//merchants
+Route::get('/merchants', App\Livewire\Merchant\MerchantIndex::class)->name('merchants.index');
+
+//product stock histories
+Route::get('/product-stock-histories', App\Livewire\ProductStockHistory\ProductStockHistoryIndex::class)->name('product-stock-history.index');
+
+//product distribution
+Route::get('/product-distribution', App\Livewire\ProductDistribution\ProductDistributionIndex::class)->name('product-distribution.index');
+
+//challenges
+Route::get('/challenges', App\Livewire\ChallengeManagement\ChallengeManagementIndex::class)->name('challenges.index');
+
+//create po
+Route::get('/create-po', App\Livewire\CreatePO\CreatePOIndex::class)->name('create-po.index');
+
+// receive po
+Route::get('/receive-po', App\Livewire\ReceivePO\ReceivePOIndex::class)->name('receive-po.index');
+
+//point management
+Route::get('/point-management', App\Livewire\PointManagement\PointManagementIndex::class)->name('point-management.index');
+
+//dp item request
+Route::get('/dp-item-requests', App\Livewire\DPItemRequest\DPItemRequestIndex::class)->name('dp-item-requests.index');
+Route::get('/dp-item-requests/{id}', App\Livewire\DPItemRequest\DPItemRequestShow::class)->name('dp-item-requests.show');
+Route::get('/dp-item-requests/{id}/edit', App\Livewire\DPItemRequest\DPItemRequestEdit::class)->name('dp-item-requests.edit');

@@ -25,6 +25,7 @@ class Merchant extends Model
         'area_city_id',
         'area_district_id',
         'area_sub_district_id',
+        'location',
         'open_time',
         'close_time',
         'status',

@@ -4,7 +4,8 @@
         <flux:subheading>Real-time inventory levels across all products</flux:subheading>
     </div>
 
-    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden">
+    <div
+        class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden">
         <table class="w-full text-left border-collapse">
             <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                 <tr>
@@ -18,46 +19,39 @@
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 @forelse ($stocks as $stock)
-                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" wire:key="{{ $stock->id }}">
-                        {{-- Product Info --}}
+                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                        wire:key="{{ $stock->id }}">
                         <td class="px-4 py-3">
                             <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                                 {{ $stock->product->name ?? 'Unknown Product' }}
                             </div>
-                            <div class="text-xs text-zinc-500 font-mono">
-                                {{ $stock->products_id }}
-                            </div>
                         </td>
 
-                        {{-- Available Stock (Hijau) --}}
                         <td class="px-4 py-3 text-center">
                             <flux:badge color="success" variant="pill" size="sm" class="min-w-[40px]">
                                 {{ $stock->stock_available }}
                             </flux:badge>
                         </td>
 
-                        {{-- In Delivery (Biru/Zinc) --}}
                         <td class="px-4 py-3 text-center">
                             <flux:badge color="zinc" variant="pill" size="sm" class="min-w-[40px]">
                                 {{ $stock->stock_in_delivery }}
                             </flux:badge>
                         </td>
 
-                        {{-- Bad Stock (Merah) --}}
                         <td class="px-4 py-3 text-center">
                             <flux:badge color="danger" variant="pill" size="sm" class="min-w-[40px]">
                                 {{ $stock->bad_stock }}
                             </flux:badge>
                         </td>
 
-                        {{-- Total Calculation --}}
                         <td class="px-4 py-3 text-center text-sm font-bold text-zinc-900 dark:text-zinc-100">
                             {{ $stock->stock_available + $stock->stock_in_delivery + $stock->bad_stock }}
                         </td>
 
-                        {{-- Action --}}
                         <td class="px-4 py-3 text-right">
-                            <flux:button size="sm" variant="ghost" icon="eye" wire:click="showDetail('{{ $stock->id }}')">
+                            <flux:button size="sm" variant="ghost" icon="eye"
+                                wire:click="showDetail('{{ $stock->id }}')">
                                 Details
                             </flux:button>
                         </td>
@@ -75,7 +69,6 @@
         {{ $stocks->links() }}
     </div>
 
-    {{-- DETAIL MODAL --}}
     <flux:modal name="stock-detail-modal" class="md:w-[500px]">
         <div class="space-y-6">
             <div>

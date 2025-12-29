@@ -3,83 +3,85 @@
 namespace App\Livewire\Operational;
 
 use App\Models\OperationalCost;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Illuminate\Support\Facades\Auth;
 
 #[Layout('layouts.app')]
-#[Title('Operational Costs')]
+#[Title('Operational Cost')]
 class OperationalCostIndex extends Component
 {
     use WithPagination, WithFileUploads;
 
-    public $search = '';
-    public $title = '';
-    public $amount = 0;
-    public $date;
-    public $attachment; 
-    public $oldAttachment; 
+    public $title, $amount, $date, $attachment;
     public $editingId = null;
+    public $isEdit = false; 
+    
+    public $search = '';
 
-    protected $queryString = ['search' => ['except' => '']];
+    protected $rules = [
+        'title' => 'required|min:3',
+        'amount' => 'required|numeric',
+        'date' => 'required|date',
+        'attachment' => 'nullable|max:2048', 
+    ];
 
-    public function mount()
+    public function resetForm()
     {
-        $this->date = now()->format('Y-m-d');
-    }
-
-    public function save()
-    {
-        $this->validate([
-            'title' => 'required|min:3',
-            'amount' => 'required|numeric|min:0',
-            'date' => 'required|date',
-            'attachment' => 'nullable|file|max:2048', 
-        ]);
-
-        /** @var \App\Models\User $user */
-        $userId = Auth::id(); 
-
-        $data = [
-            'title'      => $this->title,
-            'amount'     => $this->amount,
-            'date'       => $this->date,
-            'created_by' => $userId,
-        ];
-
-        if ($this->attachment) {
-            if ($this->oldAttachment) {
-                Storage::disk('public')->delete($this->oldAttachment);
-            }
-            $data['attachments_url'] = $this->attachment->store('operational-costs', 'public');
-        }
-
-        if ($this->editingId) {
-            OperationalCost::find($this->editingId)?->update($data);
-        } else {
-            OperationalCost::create($data);
-        }
-
-        $this->resetForm();
-        $this->modal('cost-modal')->close();
+        $this->reset(['title', 'amount', 'date', 'attachment', 'editingId', 'isEdit']);
+        $this->resetErrorBag();
     }
 
     public function edit($id)
     {
-        /** @var OperationalCost $cost */
+        $this->resetForm();
         $cost = OperationalCost::findOrFail($id);
-
-        $this->editingId = $cost->id;
+        
+        $this->editingId = $id;
+        $this->isEdit = true;
+        
         $this->title = $cost->title;
         $this->amount = $cost->amount;
-        $this->date = $cost->date;
-        $this->oldAttachment = $cost->attachments_url;
+        $this->date = \Carbon\Carbon::parse($cost->date)->format('Y-m-d');
+        $this->attachment = $cost->attachments_url;
 
         $this->modal('cost-modal')->show();
+    }
+
+    public function save()
+    {
+        $this->validate();
+
+        $cleanAmount = (int) str_replace('.', '', $this->amount);
+
+        $data = [
+            'title' => $this->title,
+            'amount' => $cleanAmount,
+            'date' => $this->date,
+            'created_by' => Auth::id(),
+        ];
+
+        if ($this->attachment && !is_string($this->attachment)) {
+            if ($this->editingId) {
+                $oldFile = OperationalCost::find($this->editingId)->attachments_url;
+                if ($oldFile) Storage::disk('public')->delete($oldFile);
+            }
+            
+            $data['attachments_url'] = $this->attachment->store('operational-attachments', 'public');
+        }
+
+        if ($this->editingId) {
+            OperationalCost::find($this->editingId)->update($data);
+        } else {
+            OperationalCost::create($data);
+        }
+
+        $this->modal('cost-modal')->close();
+        $this->resetForm();
     }
 
     public function delete($id)
@@ -89,15 +91,8 @@ class OperationalCostIndex extends Component
         if ($cost->attachments_url) {
             Storage::disk('public')->delete($cost->attachments_url);
         }
-
+        
         $cost->delete();
-    }
-
-    public function resetForm()
-    {
-        $this->reset(['title', 'amount', 'attachment', 'editingId', 'oldAttachment']);
-        $this->date = now()->format('Y-m-d');
-        $this->resetValidation();
     }
 
     public function render()
@@ -105,8 +100,8 @@ class OperationalCostIndex extends Component
         return view('livewire.operational.operational-cost-index', [
             'costs' => OperationalCost::with('creator')
                 ->where('title', 'ilike', '%' . $this->search . '%')
-                ->latest('date')
-                ->paginate(10),
+                ->orderBy('date', 'desc')
+                ->paginate(10)
         ]);
     }
 }
