@@ -264,7 +264,8 @@
 
                 @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Processing)
                     <div class="flex items-center gap-2">
-                        <flux:select wire:model="selectedDriverId" placeholder="Pilih Driver" class="min-w-[180px]">
+                        <flux:select wire:model="selectedDriverId" class="min-w-[180px]">
+                            <option value="" disabled selected>Pilih Driver</option>
                             @foreach ($this->drivers as $driver)
                                 <option value="{{ $driver->id }}">
                                     {{ $driver->name }}
@@ -426,7 +427,8 @@
                         </div>
                     @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Processing)
                         <p class="text-sm">Pilih driver untuk ditugaskan ke semua pesanan yang dipilih.</p>
-                        <flux:select wire:model.live="selectedDriverId" placeholder="Pilih Driver" class="w-full">
+                        <flux:select wire:model.live="selectedDriverId" class="w-full">
+                            <option value="" disabled selected>Pilih Driver</option>
                             @foreach ($this->drivers as $driver)
                                 <option value="{{ $driver->id }}">
                                     {{ $driver->name }}

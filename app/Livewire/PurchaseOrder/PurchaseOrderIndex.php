@@ -103,6 +103,7 @@ class PurchaseOrderIndex extends Component
             'payments'
         ])->findOrFail($id);
 
+        $this->selectedDriverId = '';
         $this->modal('detail-modal')->show();
         foreach ($this->selectedOrder->items as $item) {
             $this->approvedStocks[$item->id] = $item->requested_stock;
@@ -162,7 +163,7 @@ class PurchaseOrderIndex extends Component
     public function assignDriverAndProcess(string $orderId)
     {
         $this->validate([
-            'selectedDriverId' => 'required|exists:users,id',
+            'selectedDriverId' => 'required|not_in:|exists:users,id',
         ]);
 
         $order = ProductDistribution::findOrFail($orderId);
@@ -276,6 +277,7 @@ class PurchaseOrderIndex extends Component
         }
 
         $this->commonStatus = $statuses->first();
+        $this->selectedDriverId = '';
         $this->modal('bulk-action-modal')->show();
     }
 
@@ -322,7 +324,7 @@ class PurchaseOrderIndex extends Component
     public function bulkAssignDriverAndProcess()
     {
         $this->validate([
-            'selectedDriverId' => 'required|exists:users,id',
+            'selectedDriverId' => 'required|not_in:|exists:users,id',
         ]);
 
         $orders = ProductDistribution::whereIn('id', $this->selectedOrders)
