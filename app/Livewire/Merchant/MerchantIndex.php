@@ -229,8 +229,14 @@ class MerchantIndex extends Component
     public function create() { $this->resetFields(); $this->isEdit = false; $this->modal('merchant-form-modal')->show(); }
 
     public function render() {
+        $query = Merchant::select('user_id', 'code', 'name', 'profile_picture', 'address', 'open_time', 'close_time', 'status', 'created_at')
+            ->orderBy('created_at', 'desc');
+
+        // avoid expensive COUNT(*) on large tables
+        $merchants = $query->simplePaginate(10);
+
         return view('livewire.merchant.merchant-index', [
-            'merchants' => Merchant::with('user')->latest()->paginate(10)
+            'merchants' => $merchants
         ]);
     }
 }

@@ -7,6 +7,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 #[Title('Product Stock History')]
@@ -27,24 +28,44 @@ class ProductStockHistoryIndex extends Component
 
     public function showDetail($id)
     {
-        $this->selectedHistory = ProductStockHistory::with(['product', 'merchant'])->find($id);
-        
+        $this->selectedHistory = ProductStockHistory::with([
+            'product' => fn($q) => $q->select('id', 'name'),
+            'merchant' => fn($q) => $q->select('user_id', 'name', 'profile_picture'),
+        ])->find($id);
+
         $this->modal('stock-history-detail')->show();
     }
 
     public function render()
     {
-        $histories = ProductStockHistory::with(['product', 'merchant'])
-            ->when($this->search, function ($query) {
-                $query->whereHas('product', function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                })->orWhere('id', 'like', '%' . $this->search . '%');
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $search = trim($this->search ?? '');
 
-        return view('livewire.product-stock-history.product-stock-history-index', [
-            'histories' => $histories
-        ]);
+        $query = ProductStockHistory::select('id', 'product_id', 'merchant_id', 'stock', 'stock_before', 'stock_after', 'created_at')
+            ->with([
+                'product' => fn($q) => $q->select('id', 'name'),
+                'merchant' => fn($q) => $q->select('user_id', 'name'),
+            ])
+            ->orderBy('created_at', 'desc');
+
+        if ($search !== '') {
+            $driver = DB::getDriverName();
+            $term = "%{$search}%";
+            if ($driver === 'pgsql') {
+                $query->where(function ($q) use ($term) {
+                    $q->whereHas('product', fn($q2) => $q2->where('name', 'ilike', $term))
+                      ->orWhere('id', 'ilike', $term);
+                });
+            } else {
+                $query->where(function ($q) use ($term) {
+                    $q->whereHas('product', fn($q2) => $q2->where('name', 'like', $term))
+                      ->orWhere('id', 'like', $term);
+                });
+            }
+        }
+
+        // use simplePaginate to avoid expensive COUNT(*)
+        $histories = $query->simplePaginate(10);
+
+        return view('livewire.product-stock-history.product-stock-history-index', compact('histories'));
     }
 }

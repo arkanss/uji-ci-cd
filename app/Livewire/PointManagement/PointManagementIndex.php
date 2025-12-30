@@ -12,6 +12,7 @@ use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 #[Title('Point Management')]
@@ -168,13 +169,28 @@ class PointManagementIndex extends Component
 
     public function render()
     {
-        return view('livewire.point-management.point-management-index', [
-            'points' => Point::with('parent')
-                ->where('name', 'like', '%' . $this->search . '%')
-                ->orWhere('key', 'like', '%' . $this->search . '%')
-                ->latest()
-                ->paginate(10),
-            'parentPoints' => Point::whereNull('parent_id')->get(),
-        ]);
+        $query = Point::with('parent')
+            ->select('id', 'icon', 'key', 'name', 'abbr', 'value_idr', 'parent_id', 'status', 'is_exchangeable', 'scope_service', 'created_at');
+
+        $search = trim($this->search ?? '');
+
+        if ($search !== '') {
+            $driver = DB::getDriverName();
+            if ($driver === 'pgsql') {
+                $query->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('key', 'ilike', "%{$search}%");
+            } else {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('key', 'like', "%{$search}%");
+                });
+            }
+        }
+
+        $points = $query->orderBy('created_at', 'desc')->simplePaginate(10);
+
+        $parentPoints = Point::whereNull('parent_id')->select('id', 'name')->get();
+
+        return view('livewire.point-management.point-management-index', compact('points', 'parentPoints'));
     }
 }

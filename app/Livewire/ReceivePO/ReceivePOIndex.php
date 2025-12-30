@@ -29,12 +29,19 @@ class ReceivePOIndex extends Component
 
     public function render()
     {
-        $purchaseOrders = PurchaseOrder::with('completedBy')
-            ->where('po_number', 'like', '%' . $this->search . '%')
-            ->whereIn('status', [1, 2])
-            ->orderBy('status')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = PurchaseOrder::select('id', 'po_number', 'created_at', 'status', 'completed_by', 'completed_at', 'warehouse_id')
+            ->with('completedBy:id,name')
+            ->whereIn('status', [1, 2]) // include Requested and Completed
+            ->orderBy('status') // Requested (1) Completed (2)
+            ->orderBy('created_at', 'desc');
+
+        $search = trim($this->search ?? '');
+        if ($search !== '') {
+            $query->where('po_number', 'like', "%{$search}%");
+        }
+
+        // use simplePaginate to avoid an expensive COUNT(*) on large tables
+        $purchaseOrders = $query->simplePaginate(10);
 
         return view('livewire.receive-po.receive-po-index', [
             'purchaseOrders' => $purchaseOrders,

@@ -10,6 +10,7 @@ use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 #[Title('Operational Cost')]
@@ -120,11 +121,24 @@ class OperationalCostIndex extends Component
 
     public function render()
     {
-        return view('livewire.operational.operational-cost-index', [
-            'costs' => OperationalCost::with('creator')
-                ->where('title', 'ilike', '%' . $this->search . '%')
-                ->orderBy('date', 'desc')
-                ->paginate(10)
-        ]);
+        $query = OperationalCost::with('creator')
+            ->select('id', 'title', 'amount', 'attachments_url', 'date', 'created_by')
+            ->orderBy('date', 'desc');
+
+        $search = trim($this->search ?? '');
+
+        if ($search !== '') {
+            $driver = DB::getDriverName();
+            if ($driver === 'pgsql') {
+                $query->where('title', 'ilike', "%{$search}%");
+            } else {
+                $query->where('title', 'like', "%{$search}%");
+            }
+        }
+
+        // use simplePaginate to avoid an expensive COUNT(*) on large tables
+        $costs = $query->simplePaginate(10);
+
+        return view('livewire.operational.operational-cost-index', compact('costs'));
     }
 }

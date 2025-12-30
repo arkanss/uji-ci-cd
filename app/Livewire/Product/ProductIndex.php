@@ -10,6 +10,7 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 #[Title('Products')]
@@ -79,18 +80,33 @@ class ProductIndex extends Component
 
     public function render()
     {
-        $query = Product::with(['category'])
-            ->where(function ($q) {
-                $searchTerm = '%' . trim($this->search) . '%';
-                $q->where('name', 'ilike', $searchTerm)
-                  ->orWhere('sku', 'ilike', $searchTerm)
-                  ->orWhere('brand', 'ilike', $searchTerm)
-                  ->orWhere('code', 'ilike', $searchTerm);
-            });
+        $query = Product::select('id', 'name', 'price', 'category_id', 'code', 'sku', 'stock', 'brand', 'created_at')
+            ->with(['category' => function ($q) { $q->select('id', 'name'); }]);
 
-        return view('livewire.product.product-index', [
-            'products' => $query->latest()->paginate(10),
-            'categories' => ProductCategory::orderBy('name')->get()
-        ]);
+        $search = trim($this->search ?? '');
+        if ($search !== '') {
+            $driver = DB::getDriverName();
+            $term = "%{$search}%";
+            if ($driver === 'pgsql') {
+                $query->where(function ($q) use ($term) {
+                    $q->where('name', 'ilike', $term)
+                      ->orWhere('sku', 'ilike', $term)
+                      ->orWhere('brand', 'ilike', $term)
+                      ->orWhere('code', 'ilike', $term);
+                });
+            } else {
+                $query->where(function ($q) use ($term) {
+                    $q->where('name', 'like', $term)
+                      ->orWhere('sku', 'like', $term)
+                      ->orWhere('brand', 'like', $term)
+                      ->orWhere('code', 'like', $term);
+                });
+            }
+        }
+
+        $products = $query->orderBy('created_at', 'desc')->simplePaginate(10);
+        $categories = ProductCategory::select('id', 'name')->orderBy('name')->get();
+
+        return view('livewire.product.product-index', compact('products', 'categories'));
     }
 }

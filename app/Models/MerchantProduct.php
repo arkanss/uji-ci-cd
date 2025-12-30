@@ -50,7 +50,8 @@ class MerchantProduct extends Model
 
     public function merchant()
     {
-        return $this->belongsTo(Merchant::class, 'merchant_id');
+        // merchant primary key is `user_id` (not the default `id`), so specify owner key
+        return $this->belongsTo(Merchant::class, 'merchant_id', 'user_id');
     }
 
     public function product()

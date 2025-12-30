@@ -10,6 +10,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Http;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 #[Title('Product Categories')]
@@ -134,10 +135,22 @@ class ProductCategoryIndex extends Component
 
     public function render()
     {
-        return view('livewire.productcategory.category-index', [
-            'categories' => ProductCategory::where('name', 'ilike', '%'.$this->search.'%')
-                ->latest()
-                ->paginate(10),
-        ]);
+        $query = ProductCategory::select('id', 'name', 'description', 'image', 'created_at', 'updated_at')
+            ->orderBy('created_at', 'desc');
+
+        $search = trim($this->search ?? '');
+        if ($search !== '') {
+            $driver = DB::getDriverName();
+            $term = "%{$search}%";
+            if ($driver === 'pgsql') {
+                $query->where('name', 'ilike', $term);
+            } else {
+                $query->where('name', 'like', $term);
+            }
+        }
+
+        $categories = $query->simplePaginate(10);
+
+        return view('livewire.productcategory.category-index', compact('categories'));
     }
 }

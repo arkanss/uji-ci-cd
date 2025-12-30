@@ -44,6 +44,7 @@ class ProductStockHistory extends Model
 
     public function merchant(): BelongsTo
     {
-        return $this->belongsTo(Merchant::class);
+        // Merchant primary key is `user_id`, specify owner key to avoid incorrect `id` usage
+        return $this->belongsTo(Merchant::class, 'merchant_id', 'user_id');
     }
 }
