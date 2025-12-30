@@ -6,7 +6,6 @@
         </div>
 
         <flux:modal.trigger name="cost-modal">
-            {{-- Reset Form akan mengeset isEdit = false --}}
             <flux:button variant="primary" icon="plus" wire:click="resetForm">Add Record</flux:button>
         </flux:modal.trigger>
     </div>
@@ -56,7 +55,7 @@
                                     <flux:menu>
                                         @if ($cost->attachments_url)
                                             <flux:menu.item icon="paper-clip"
-                                                href="{{ Storage::url($cost->attachments_url) }}" target="_blank">View
+                                               href="{{ $cost->attachments_url }}" target="_blank">View
                                                 Attachment</flux:menu.item>
                                         @endif
                                         <flux:menu.item icon="pencil-square" wire:click="edit('{{ $cost->id }}')">
@@ -156,7 +155,7 @@
                             @endphp
 
                             @if ($isImage)
-                                <img src="{{ asset('storage/' . $attachment) }}"
+                                <img src="{{ $attachment }}"
                                     class="absolute inset-0 w-full h-full object-cover" />
                             @else
                                 <div class="flex flex-col items-center z-10 text-indigo-400">

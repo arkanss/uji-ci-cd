@@ -41,8 +41,7 @@
                                     <div
                                         class="h-10 w-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                                         @if ($category->image)
-                                            <img src="{{ Storage::disk('public')->url($category->image) }}"
-                                                class="object-cover w-full h-full">
+                                            <img src="{{ $category->image }}" class="object-cover w-full h-full">
                                         @else
                                             <div class="h-full w-full flex items-center justify-center">
                                                 <flux:icon.photo class="size-4 text-zinc-400" />

@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Validation\Rule;
+use GuzzleHttp\Client;
 
 #[Layout('layouts.app')]
 #[Title('Merchant Management')]
@@ -38,6 +39,41 @@ class MerchantIndex extends Component
     {
         return $this->latitude . ', ' . $this->longitude;
     }
+
+    private function uploadToApi($file): string
+    {
+        $client = new Client();
+
+        $response = $client->post(
+            config('services.file_upload.api_url') . '/file/upload',
+            [
+                'multipart' => [
+                    [
+                        'name'     => 'file',
+                        'contents' => fopen($file->getRealPath(), 'r'),
+                        'filename' => $file->getClientOriginalName(),
+                    ],
+                ],
+            ]
+        );
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \Exception(
+                'Upload image ke API gagal. Status: ' . $response->getStatusCode()
+            );
+        }
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        $url = $body['data']['file_url'] ?? null;
+
+        if (! $url) {
+            throw new \Exception('file_url tidak ditemukan di response API');
+        }
+
+        return $url;
+    }
+
 
     public function addGalleryItem()
     {
@@ -134,7 +170,7 @@ class MerchantIndex extends Component
             }
 
             if ($this->profile_picture) {
-                $merchant->profile_picture = $this->profile_picture->store('merchants/profiles', 'public');
+                $merchant->profile_picture = $this->uploadToApi($this->profile_picture);
             }
 
             $merchant->fill([
@@ -162,10 +198,13 @@ class MerchantIndex extends Component
 
             if (!empty($this->merchant_galleries)) {
                 foreach ($this->merchant_galleries as $item) {
-                    if (isset($item['image']) && $item['image'] instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                    if (
+                        isset($item['image']) &&
+                        $item['image'] instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile
+                    ) {
                         MerchantImage::create([
                             'merchant_id' => $merchant->user_id,
-                            'image' => $item['image']->store('merchants/gallery', 'public'),
+                            'image' => $this->uploadToApi($item['image']),
                             'ordering' => $item['ordering']
                         ]);
                     }

@@ -40,7 +40,7 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200">
                                     @if ($merchant->profile_picture)
-                                        <img src="{{ asset('storage/' . $merchant->profile_picture) }}"
+                                        <img src="{{ $merchant->profile_picture }}"
                                             alt="{{ $merchant->name }}" class="w-full h-full object-cover">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center text-zinc-400">

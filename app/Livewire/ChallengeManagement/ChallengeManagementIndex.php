@@ -15,6 +15,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\WithPagination;
 use Flux\Flux;
+use GuzzleHttp\Client;
+
 
 #[Layout('layouts.app')]
 #[Title('Challenge Management')]
@@ -37,6 +39,41 @@ class ChallengeManagementIndex extends Component
     {
         $this->resetForm();
     }
+
+    private function uploadToApi($file): string
+    {
+        $client = new Client();
+
+        $response = $client->post(
+            config('services.file_upload.api_url') . '/file/upload',
+            [
+                'multipart' => [
+                    [
+                        'name'     => 'file',
+                        'contents' => fopen($file->getRealPath(), 'r'),
+                        'filename' => $file->getClientOriginalName(),
+                    ],
+                ],
+            ]
+        );
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \Exception(
+                'Upload image ke API gagal. Status: ' . $response->getStatusCode()
+            );
+        }
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        $url = $body['data']['file_url'] ?? null;
+
+        if (! $url) {
+            throw new \Exception('file_url tidak ditemukan di response API');
+        }
+
+        return $url;
+    }
+
 
     public function resetForm()
     {
@@ -133,7 +170,7 @@ class ChallengeManagementIndex extends Component
                 $challenge = Challenge::findOrFail($this->challengeId);
 
                 if ($this->image) {
-                    $challenge->image = $this->image->store('challenges', 'public');
+                    $challenge->image = $this->uploadToApi($this->image);
                 }
 
                 $challenge->update([
@@ -154,7 +191,9 @@ class ChallengeManagementIndex extends Component
                 $challenge = Challenge::create([
                     'name' => $this->name,
                     'description' => $this->description,
-                    'image' => $this->image?->store('challenges', 'public'),
+                    'image' => $this->image
+                        ? $this->uploadToApi($this->image)
+                        : null,
                     'type' => $this->type,
                     'trigger_type' => $this->trigger_type,
                     'target' => $this->target,

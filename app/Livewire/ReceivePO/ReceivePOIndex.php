@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Flux\Flux;
+use App\Models\ProductStockOverview;
+use App\Models\ProductStockHistory;
 
 #[Layout('layouts.app')]
 #[Title('Receive Purchase Order')]
@@ -23,14 +25,14 @@ class ReceivePOIndex extends Component
     public $selectedPO = null;
     public $receivingId = null;
     public $viewOnly = false;
-    public $receiveItems = []; // id, product_name, requested_stock, received_stock, unit_name
+    public $receiveItems = []; 
 
     public function render()
     {
         $purchaseOrders = PurchaseOrder::with('completedBy')
             ->where('po_number', 'like', '%' . $this->search . '%')
-            ->whereIn('status', [1, 2]) // include Requested and Completed
-            ->orderBy('status') // put Requested (1) before Completed (2)
+            ->whereIn('status', [1, 2])
+            ->orderBy('status')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -92,33 +94,53 @@ class ReceivePOIndex extends Component
         ]);
 
         DB::transaction(function () {
-            $po = PurchaseOrder::findOrFail($this->receivingId);
-            foreach ($this->receiveItems as $it) {
-                $poi = PurchaseOrderItem::find($it['id']);
-                if (! $poi) continue;
-                $received = intval($it['received_stock']);
-                $poi->received_stock = $received;
-                $poi->save();
+        $po = PurchaseOrder::lockForUpdate()->findOrFail($this->receivingId);
 
-                $overview = \App\Models\ProductStockOverview::where('products_id', $poi->product_id)->first();
-                if ($overview) {
-                    $overview->stock_available = (int) $overview->stock_available + $received;
-                    $overview->save();
-                } else {
-                    \App\Models\ProductStockOverview::create([
-                        'products_id' => $poi->product_id,
-                        'stock_available' => $received,
-                        'stock_in_delivery' => 0,
-                        'bad_stock' => 0,
-                    ]);
-                }
+        if ($po->status !== 1) {
+            throw new \Exception('PO already completed');
+        }
+
+        foreach ($this->receiveItems as $it) {
+            $poi = PurchaseOrderItem::lockForUpdate()->find($it['id']);
+            if (! $poi) continue;
+
+            $received = (int) $it['received_stock'];
+
+            $poi->received_stock = $received;
+            $poi->save();
+
+            $overview = ProductStockOverview::where('products_id', $poi->product_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($overview) {
+                $beforeStock = $overview->stock_available;
+                $overview->stock_available += $received;
+                $overview->save();
+            } else {
+                $beforeStock = 0;
+                $overview = ProductStockOverview::create([
+                    'products_id' => $poi->product_id,
+                    'stock_available' => $received,
+                    'stock_in_delivery' => 0,
+                    'bad_stock' => 0,
+                ]);
             }
 
-            $po->status = 2;
-            $po->completed_by = Auth::id();
-            $po->completed_at = Carbon::now();
-            $po->save();
-        });
+            ProductStockHistory::create([
+                'product_id' => $poi->product_id,
+                'stock' => $received, 
+                'stock_before' => $beforeStock,
+                'stock_after' => $overview->stock_available,
+                'status' => 'received', 
+            ]);
+        }
+
+        $po->status = 2;
+        $po->completed_by = Auth::id();
+        $po->completed_at = Carbon::now();
+        $po->save();
+    });
 
         session()->flash('po_success', 'PO received and completed');
         $this->receivingId = null;
