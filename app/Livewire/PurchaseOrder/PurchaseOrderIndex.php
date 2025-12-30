@@ -166,6 +166,12 @@ class PurchaseOrderIndex extends Component
         $order->update([
             'status' => OrderRequestEnum::Processing,
         ]);
+        $this->dispatch('show-toast', ['message' => 'Order marked as Processing.', 'type' => 'success']);
+        // refresh selected order if open and close modal
+        if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
+            $this->selectedOrder->refresh();
+            $this->modal('detail-modal')->close();
+        }
     }
 
     public function assignDriverAndProcess(string $orderId)
@@ -196,6 +202,11 @@ class PurchaseOrderIndex extends Component
         });
 
         $this->selectedDriverId = null;
+        $this->dispatch('show-toast', ['message' => 'Driver assigned and order processed.', 'type' => 'success']);
+        if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
+            $this->selectedOrder->refresh();
+            $this->modal('detail-modal')->close();
+        }
     }
 
     public function markAsDelivering(string $id)
@@ -209,6 +220,11 @@ class PurchaseOrderIndex extends Component
         $order->update([
             'status' => OrderRequestEnum::Delivering,
         ]);
+        $this->dispatch('show-toast', ['message' => 'Order marked as Delivering.', 'type' => 'success']);
+        if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
+            $this->selectedOrder->refresh();
+            $this->modal('detail-modal')->close();
+        }
     }
 
     public function markAsDelivered(string $id)
@@ -231,6 +247,11 @@ class PurchaseOrderIndex extends Component
                 ]);
             }
         });
+        $this->dispatch('show-toast', ['message' => 'Order marked as Delivered.', 'type' => 'success']);
+        if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
+            $this->selectedOrder->refresh();
+            $this->modal('detail-modal')->close();
+        }
     }
 
     public function rejectOrder($id)
@@ -253,18 +274,27 @@ class PurchaseOrderIndex extends Component
 
         $this->rejectReason = '';
         $this->dispatch('show-toast', ['message' => 'Order berhasil ditolak.', 'type' => 'success']);
+        if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
+            $this->selectedOrder->refresh();
+            $this->modal('detail-modal')->close();
+        }
     }
 
     public function updatedSelectAll($value)
     {
+        // Optimize: only select IDs for the current page to avoid plucking millions of rows.
         if ($value) {
             $this->selectedOrders = ProductDistribution::query()
                 ->where('code', 'like', '%' . $this->search . '%')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
                 ->pluck('id')
                 ->map(fn ($id) => (string) $id)
                 ->toArray();
+            $this->selectAll = true;
         } else {
             $this->selectedOrders = [];
+            $this->selectAll = false;
         }
     }
 

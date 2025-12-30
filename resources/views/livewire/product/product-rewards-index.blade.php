@@ -1,9 +1,10 @@
 <div class="p-6 max-w-7xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <flux:heading size="xl" class="mb-1">Product Rewards</flux:heading>
-            <flux:subheading>Manage product reward mappings and values</flux:subheading>
-        </div>
+    <div class="mb-6">
+        <flux:heading size="xl" class="mb-1">Product Rewards</flux:heading>
+        <flux:subheading>Manage product reward mappings and values</flux:subheading>
+    </div>
+
+    <div class="flex items-center justify-end mb-4">
         <flux:button variant="primary" icon="plus" wire:click="create">New product reward</flux:button>
     </div>
 
@@ -12,14 +13,14 @@
             <div></div>
         </div>
 
-        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-x-auto">
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                     <tr>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Product</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Amount</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Reward type</th>
-                        <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Reward id</th>
+                        
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Created at</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Updated at</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase text-right">Actions</th>
@@ -31,9 +32,9 @@
                             <td class="px-4 py-3 text-sm font-medium">{{ optional($reward->product)->name ?? $reward->product_id }}</td>
                             <td class="px-4 py-3 text-sm font-mono text-zinc-600">{{ $reward->amount }}</td>
                             <td class="px-4 py-3 text-sm">{{ $reward->reward_type ?? '-' }}</td>
-                            <td class="px-4 py-3 text-sm font-mono text-zinc-600">{{ $reward->reward_id ?? '-' }}</td>
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $reward->created_at->format('d M Y H:i')}}</td>
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $reward->updated_at->format('d M Y H:i')}}</td>
+                            
+                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $reward->created_at }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $reward->updated_at }}</td>
                             <td class="px-4 py-3 text-right text-zinc-500">
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
@@ -48,7 +49,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="p-10 text-center text-zinc-500 italic">No product rewards found.</td>
+                            <td colspan="6" class="p-10 text-center text-zinc-500 italic">No product rewards found.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -136,10 +137,7 @@
                             <span class="text-xs text-zinc-500 font-bold">Product</span>
                             <div class="text-sm">{{ $selectedReward->product?->name ?? $selectedReward->product_id }}</div>
                         </div>
-                        <div>
-                            <span class="text-xs text-zinc-500 font-bold">Reward id</span>
-                            <div class="text-sm font-mono">{{ $selectedReward->reward_id }}</div>
-                        </div>
+                        
                         <div>
                             <span class="text-xs text-zinc-500 font-bold">Rewardable Entity</span>
                             <div class="text-sm">{{ $selectedReward->rewardable_entity_id ?? '-' }}</div>
