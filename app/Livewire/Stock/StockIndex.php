@@ -30,17 +30,18 @@ class StockIndex extends Component
         $this->modal('stock-detail-modal')->show();
     }
 
-public function getStockLogsProperty()
-{
-    if (!$this->selectedStock) {
-        return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 5);
-    }
+    public function getStockLogsProperty()
+    {
+        if (!$this->selectedStock) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 5);
+        }
 
-    return $this->selectedStock->product
-        ->stockHistories()
-        ->latest()
-        ->paginate(5, ['*'], 'stockLogsPage');
-}
+        return $this->selectedStock->product
+            ->stockHistories()
+            ->whereNull('merchant_id')
+            ->latest()
+            ->paginate(5, ['*'], 'stockLogsPage');
+    }
 
     public function render()
     {

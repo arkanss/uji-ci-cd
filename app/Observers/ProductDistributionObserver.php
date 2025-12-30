@@ -65,7 +65,7 @@ class ProductDistributionObserver
                     ProductStockHistory::create([
                         'product_id'   => $item->product_id,
                         'merchant_id'  => null,
-                        'stock'        => -$item->approved_stock,
+                        'stock'        => $item->approved_stock,
                         'stock_before' => $before,
                         'stock_after'  => $after,
                     ]);

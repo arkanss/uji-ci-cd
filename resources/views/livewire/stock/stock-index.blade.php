@@ -35,7 +35,7 @@
 
                         <td class="px-4 py-3 text-center">
                             <flux:badge color="zinc" variant="pill" size="sm" class="min-w-[40px]">
-                                {{ $stock->stock_in_delivery }}
+                                {{ $stock->stock_in_delivery ? '-' . $stock->stock_in_delivery : 0 }}
                             </flux:badge>
                         </td>
 
