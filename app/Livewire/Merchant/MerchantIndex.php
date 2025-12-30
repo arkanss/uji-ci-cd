@@ -112,7 +112,7 @@ class MerchantIndex extends Component
         $this->user_username = $user->username;
         $this->user_email = $user->email;
         $this->user_phone = $user->phone_number;
-        $this->auth_using_access_code = $user->auth_using_access_code;
+        $this->auth_using_access_code = (bool) $user->auth_using_access_code;
         $this->access_code = $user->access_code;
 
         $this->name = $merchant->name;
@@ -173,6 +173,14 @@ class MerchantIndex extends Component
                 $merchant->profile_picture = $this->uploadToApi($this->profile_picture);
             }
 
+            $locationValue = null;
+            // only set location when both latitude and longitude are non-empty and numeric
+            if ($this->latitude !== null && $this->longitude !== null && $this->latitude !== '' && $this->longitude !== '' && is_numeric($this->latitude) && is_numeric($this->longitude)) {
+                $lat = $this->latitude;
+                $lng = $this->longitude;
+                $locationValue = DB::raw("ST_GeogFromText('POINT({$lng} {$lat})')");
+            }
+
             $merchant->fill([
                 'name' => $this->name,
                 'code' => $this->code,
@@ -184,7 +192,7 @@ class MerchantIndex extends Component
                 'area_sub_district_id' => $this->area_sub_district_id ?: null,
                 'latitude' => $this->latitude,
                 'longitude' => $this->longitude,
-                'location' => DB::raw("ST_GeogFromText('POINT({$this->longitude} {$this->latitude})')"),
+                'location' => $locationValue,
                 'open_time' => $this->open_time,
                 'close_time' => $this->close_time,
                 'gender' => (int) $this->gender,
@@ -223,6 +231,8 @@ class MerchantIndex extends Component
 
     public function resetFields() {
         $this->reset(['user_name','user_email','user_username','user_phone','user_password','access_code','auth_using_access_code','name','description','date_of_birth','gender','profile_picture','merchant_galleries','address','full_address','code','area_province_id','area_city_id','area_district_id','area_sub_district_id','latitude','longitude','open_time','close_time','status','point_balance','land_level','merchantId','isEdit']);
+        // ensure typed boolean properties receive valid boolean defaults after reset()
+        $this->auth_using_access_code = false;
         $this->currentStep = 1;
     }
 
