@@ -36,6 +36,40 @@ class OperationalCostIndex extends Component
         $this->resetErrorBag();
     }
 
+    private function uploadToApi($file)
+    {
+        $client = new \GuzzleHttp\Client();
+
+        $response = $client->post(
+            config('services.file_upload.api_url') . '/file/upload',
+            [
+                'multipart' => [
+                    [
+                        'name'     => 'file',
+                        'contents' => fopen($file->getRealPath(), 'r'),
+                        'filename' => $file->getClientOriginalName(),
+                    ],
+                ],
+            ]
+        );
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \Exception(
+                'Upload attachment gagal. Status: ' . $response->getStatusCode()
+            );
+        }
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        $url = $body['data']['file_url'] ?? null;
+
+        if (! $url) {
+            throw new \Exception('file_url tidak ditemukan di response API');
+        }
+
+        return $url;
+    }
+
     public function edit($id)
     {
         $this->resetForm();
@@ -65,13 +99,8 @@ class OperationalCostIndex extends Component
             'created_by' => Auth::id(),
         ];
 
-        if ($this->attachment && !is_string($this->attachment)) {
-            if ($this->editingId) {
-                $oldFile = OperationalCost::find($this->editingId)->attachments_url;
-                if ($oldFile) Storage::disk('public')->delete($oldFile);
-            }
-            
-            $data['attachments_url'] = $this->attachment->store('operational-attachments', 'public');
+        if ($this->attachment && ! is_string($this->attachment)) {
+            $data['attachments_url'] = $this->uploadToApi($this->attachment);
         }
 
         if ($this->editingId) {
@@ -86,13 +115,7 @@ class OperationalCostIndex extends Component
 
     public function delete($id)
     {
-        $cost = OperationalCost::findOrFail($id);
-        
-        if ($cost->attachments_url) {
-            Storage::disk('public')->delete($cost->attachments_url);
-        }
-        
-        $cost->delete();
+        OperationalCost::findOrFail($id)->delete();
     }
 
     public function render()

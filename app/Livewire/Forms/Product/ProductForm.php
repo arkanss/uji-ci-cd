@@ -6,6 +6,7 @@ use App\Models\Product;
 use Livewire\Form;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
+use GuzzleHttp\Client;
 
 class ProductForm extends Form
 {
@@ -91,6 +92,41 @@ class ProductForm extends Form
         $this->width = $product->width;
     }
 
+    private function uploadToApi($file): string
+    {
+        $client = new Client();
+
+        $response = $client->post(
+            config('services.file_upload.api_url') . '/file/upload',
+            [
+                'multipart' => [
+                    [
+                        'name'     => 'file',
+                        'contents' => fopen($file->getRealPath(), 'r'),
+                        'filename' => $file->getClientOriginalName(),
+                    ],
+                ],
+            ]
+        );
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \Exception(
+                'Upload image ke API gagal. Status: ' . $response->getStatusCode()
+            );
+        }
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        $url = $body['data']['file_url'] ?? null;
+
+        if (! $url) {
+            throw new \Exception('file_url tidak ditemukan di response API');
+        }
+
+        return $url;
+    }
+
+
     public function store()
     {
         $this->validate();
@@ -98,7 +134,7 @@ class ProductForm extends Form
         $data = $this->except(['product', 'image', 'oldImage']);
         
         if ($this->image) {
-            $data['image'] = $this->image->store('products', 'public');
+            $data['image'] = $this->uploadToApi($this->image);
         }
 
         Product::create($data);
@@ -112,10 +148,7 @@ class ProductForm extends Form
         $data = $this->except(['product', 'image', 'oldImage']);
 
         if ($this->image) {
-            if ($this->oldImage) {
-                Storage::disk('public')->delete($this->oldImage);
-            }
-            $data['image'] = $this->image->store('products', 'public');
+            $data['image'] = $this->uploadToApi($this->image);
         }
 
         $this->product->update($data);

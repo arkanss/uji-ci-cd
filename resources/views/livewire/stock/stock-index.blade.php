@@ -76,29 +76,72 @@
                 <flux:subheading>{{ $selectedStock?->product->name }}</flux:subheading>
             </div>
 
-            <div class="space-y-4">
-                <div class="flex justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-                    <span class="text-sm text-zinc-500">Available for Sale</span>
-                    <span class="text-sm font-bold text-green-600">{{ $selectedStock?->stock_available }}</span>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 text-center shadow-sm">
+                    <div class="text-xs text-zinc-500 uppercase font-medium mb-1">Available for Sale</div>
+                    <div class="text-xl font-bold text-green-600">{{ $selectedStock?->stock_available }}</div>
                 </div>
-                <div class="flex justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-                    <span class="text-sm text-zinc-500">Currently in Delivery</span>
-                    <span class="text-sm font-bold text-blue-600">{{ $selectedStock?->stock_in_delivery }}</span>
+                <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 text-center shadow-sm">
+                    <div class="text-xs text-zinc-500 uppercase font-medium mb-1">Currently in Delivery</div>
+                    <div class="text-xl font-bold text-blue-600">{{ $selectedStock?->stock_in_delivery }}</div>
                 </div>
-                <div class="flex justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-                    <span class="text-sm text-zinc-500">Damaged / Bad Stock</span>
-                    <span class="text-sm font-bold text-red-600">{{ $selectedStock?->bad_stock }}</span>
-                </div>
-                <hr class="border-zinc-200 dark:border-zinc-700">
-                <div class="flex justify-between p-3">
-                    <span class="text-sm font-bold">Total Physical Inventory</span>
-                    <span class="text-sm font-black underline">
-                        {{ ($selectedStock?->stock_available ?? 0) + ($selectedStock?->stock_in_delivery ?? 0) + ($selectedStock?->bad_stock ?? 0) }}
-                    </span>
+                <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 text-center shadow-sm">
+                    <div class="text-xs text-zinc-500 uppercase font-medium mb-1">Damaged / Bad Stock</div>
+                    <div class="text-xl font-bold text-red-600">{{ $selectedStock?->bad_stock }}</div>
                 </div>
             </div>
 
-            <div class="flex gap-2">
+            <div
+                class="mt-4 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm text-center">
+                <div class="text-sm font-bold">Total Physical Inventory</div>
+                <div class="text-2xl font-black underline mt-1">
+                    {{ ($selectedStock?->stock_available ?? 0) + ($selectedStock?->stock_in_delivery ?? 0) + ($selectedStock?->bad_stock ?? 0) }}
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <flux:heading size="sm">Stock History</flux:heading>
+                <div class="max-h-[250px] overflow-y-auto space-y-2">
+                    @forelse ($this->stockLogs as $log)
+                        @php
+                            $diff = $log->stock_after - $log->stock_before;
+                            $isIn = $diff > 0;
+                        @endphp
+                        <div
+                            class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-3 shadow-sm flex justify-between items-center">
+                            <div class="text-left">
+                                <div class="font-medium flex items-center gap-2">
+                                    {{ $isIn ? 'Stock In' : 'Stock Out' }}
+                                    @if ($log->status)
+                                        <span
+                                            class="text-xs px-2 py-0.5 rounded-full {{ $log->status === 'delivering' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
+                                            {{ ucfirst($log->status) }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="text-xs text-zinc-500">{{ $log->created_at->format('d M Y H:i') }}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xl font-bold {{ $isIn ? 'text-green-600' : 'text-red-600' }}">
+                                    {{ $diff > 0 ? '+' : '' }}{{ $diff }}
+                                </div>
+                                <div class="text-xs text-zinc-500">{{ $log->stock_before }} → {{ $log->stock_after }}
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-sm text-zinc-500 py-4 text-center">No stock history available</div>
+                    @endforelse
+                </div>
+
+                @if ($this->stockLogs->hasPages())
+                    <div class="mt-2">
+                        {{ $this->stockLogs->links() }}
+                    </div>
+                @endif
+            </div>
+
+            <div class="flex gap-2 mt-4">
                 <flux:spacer />
                 <flux:modal.close>
                     <flux:button variant="ghost">Close</flux:button>

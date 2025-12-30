@@ -33,8 +33,6 @@ class ProductStockOverview extends Model
         'deleted_at' => 'datetime',
     ];
 
-    
-
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'products_id');

@@ -29,9 +29,9 @@
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                             <td class="px-4 py-3">
                                 @if ($point->icon)
-                                    <img src="{{ asset('storage/' . $point->icon) }}"
-                                        class="h-8 w-8 object-contain rounded">
+                                    <img src="{{ $point->icon }}" class="h-8 w-8 object-contain rounded">
                                 @endif
+
                             </td>
 
                             <td class="px-4 py-3 text-sm">

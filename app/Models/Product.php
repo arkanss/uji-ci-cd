@@ -100,6 +100,11 @@ class Product extends Model
         return $this->hasMany(ProductReward::class);
     }
 
+    public function stockOverview()
+    {
+        return $this->hasOne(ProductStockOverview::class, 'products_id');
+    }
+
     public function merchantProducts(): HasMany
     {
         return $this->hasMany(MerchantProduct::class);

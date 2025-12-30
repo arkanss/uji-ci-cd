@@ -47,6 +47,40 @@ class PointManagementIndex extends Component
         ];
     }
 
+    private function uploadToApi($file)
+    {
+        $client = new \GuzzleHttp\Client();
+
+        $response = $client->post(
+            config('services.file_upload.api_url') . '/file/upload',
+            [
+                'multipart' => [
+                    [
+                        'name'     => 'file',
+                        'contents' => fopen($file->getRealPath(), 'r'),
+                        'filename' => $file->getClientOriginalName(),
+                    ],
+                ],
+            ]
+        );
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \Exception(
+                'Upload image ke API gagal. Status: ' . $response->getStatusCode()
+            );
+        }
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        $url = $body['data']['file_url'] ?? null;
+
+        if (! $url) {
+            throw new \Exception('file_url tidak ditemukan di response API');
+        }
+
+        return $url;
+    }
+
     public function create()
     {
         $this->resetFields();
@@ -95,31 +129,7 @@ class PointManagementIndex extends Component
         ];
 
         if ($this->icon) {
-            // Hapus icon lama jika ada
-            $disk = env('FILESYSTEM_DISK', 'public');
-            // delete old icon only if it's a storage path (not an external URL)
-            if ($this->oldIcon && is_string($this->oldIcon) && !str_starts_with($this->oldIcon, ['http://', 'https://'])) {
-                try {
-                    Storage::disk($disk)->delete($this->oldIcon);
-                } catch (\Throwable $e) {
-                    // ignore deletion errors
-                }
-            }
-
-            // If icon is an uploaded file, store it to configured disk and save public URL.
-            if (is_string($this->icon)) {
-                $data['icon'] = $this->icon;
-            } else {
-                $path = Storage::disk($disk)->putFile('points-icons', $this->icon);
-                // try to get a publicly accessible URL for the stored file
-                try {
-                    $url = Storage::disk($disk)->url($path);
-                } catch (\Throwable $e) {
-                    // fallback to storing path
-                    $url = $path;
-                }
-                $data['icon'] = $url;
-            }
+            $data['icon'] = $this->uploadToApi($this->icon);
         }
 
         Point::updateOrCreate(['id' => $this->id], $data);
@@ -135,25 +145,10 @@ class PointManagementIndex extends Component
 
     public function removeIcon()
     {
-        $disk = env('FILESYSTEM_DISK', 'public');
-        // if a newly uploaded temporary file exists, just clear it
-        if ($this->icon && !is_string($this->icon)) {
-            $this->icon = null;
-            return;
-        }
-
-        // if oldIcon is a stored path (not external url), try delete it
-        if ($this->oldIcon && is_string($this->oldIcon) && !str_starts_with($this->oldIcon, ['http://', 'https://'])) {
-            try {
-                Storage::disk($disk)->delete($this->oldIcon);
-            } catch (\Throwable $e) {
-                // ignore
-            }
-        }
-
-        $this->oldIcon = null;
         $this->icon = null;
+        $this->oldIcon = null;
     }
+
 
     public function resetFields()
     {

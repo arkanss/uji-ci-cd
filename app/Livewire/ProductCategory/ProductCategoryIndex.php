@@ -5,27 +5,61 @@ namespace App\Livewire\ProductCategory;
 use App\Models\ProductCategory;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\WithFileUploads; 
-use Illuminate\Support\Str;
+use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Title;
+use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 
 #[Layout('layouts.app')]
 #[Title('Product Categories')]
 class ProductCategoryIndex extends Component
 {
-    use WithPagination, WithFileUploads; 
+    use WithPagination, WithFileUploads;
 
     public $search = '';
     public $name = '';
     public $description = '';
-    public $image; 
+    public $image;
     public $editingCategoryId = null;
-    public $oldImage = null; 
-    public $categoryIdBeingDeleted = null; 
+    public $oldImage = null;
+    public $categoryIdBeingDeleted = null;
 
     protected $queryString = ['search' => ['except' => '']];
+
+    private function uploadToApi($file)
+    {
+        $client = new \GuzzleHttp\Client();
+
+        $response = $client->post(
+            config('services.file_upload.api_url') . '/file/upload',
+            [
+                'multipart' => [
+                    [
+                        'name'     => 'file',
+                        'contents' => fopen($file->getRealPath(), 'r'),
+                        'filename' => $file->getClientOriginalName(),
+                    ],
+                ],
+            ]
+        );
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \Exception(
+                'Upload image ke API gagal. Status: ' . $response->getStatusCode()
+            );
+        }
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        $url = $body['data']['file_url'] ?? null;
+
+        if (! $url) {
+            throw new \Exception('file_url tidak ditemukan di response API');
+        }
+
+        return $url;
+    }
 
     public function create()
     {
@@ -57,10 +91,7 @@ class ProductCategoryIndex extends Component
         ];
 
         if ($this->image) {
-            if ($this->oldImage) {
-                Storage::disk('public')->delete($this->oldImage);
-            }
-            $data['image'] = $this->image->store('categories', 'public');
+            $data['image'] = $this->uploadToApi($this->image);
         }
 
         if ($this->editingCategoryId) {
@@ -77,10 +108,11 @@ class ProductCategoryIndex extends Component
     {
         $this->resetForm();
         $category = ProductCategory::findOrFail($id);
+
         $this->editingCategoryId = $id;
         $this->name = $category->name;
         $this->description = $category->description;
-        $this->oldImage = $category->image; 
+        $this->oldImage = $category->image;
 
         $this->modal('category-modal')->show();
     }
@@ -94,13 +126,7 @@ class ProductCategoryIndex extends Component
     public function delete()
     {
         if ($this->categoryIdBeingDeleted) {
-            $category = ProductCategory::findOrFail($this->categoryIdBeingDeleted);
-            
-            if ($category->image) {
-                Storage::disk('public')->delete($category->image);
-            }
-            
-            $category->delete();
+            ProductCategory::findOrFail($this->categoryIdBeingDeleted)->delete();
             $this->modal('delete-category-modal')->close();
             $this->categoryIdBeingDeleted = null;
         }
