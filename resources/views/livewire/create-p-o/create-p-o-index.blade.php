@@ -104,12 +104,6 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <flux:field>
-                        <flux:label>PO Number <span class="text-red-500">*</span></flux:label>
-                        <flux:input wire:model="po_number" />
-                        <flux:error name="po_number" />
-                    </flux:field>
-
-                    <flux:field>
                         <flux:label>Date</flux:label>
                         <flux:input type="text" wire:model="date" disabled />
                     </flux:field>
@@ -132,52 +126,56 @@
 
                 <div>
                     <flux:heading size="sm" class="mb-2">Items</flux:heading>
-                    <div class="space-y-2">
-                        @foreach ($items as $index => $item)
-                            <div class="grid grid-cols-12 gap-2 items-end">
-                                <div class="col-span-5">
-                                    <flux:field>
-                                        <flux:label>Product</flux:label>
-                                        <flux:select wire:model="items.{{ $index }}.product_id">
-                                            <option value="">-- Select Product --</option>
-                                            @foreach ($products as $p)
-                                                <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </flux:select>
-                                    </flux:field>
+                    <div class="space-y-3">
+                        <div class="max-h-[55vh] overflow-auto pr-2 space-y-3">
+                            @foreach ($items as $index => $item)
+                                <div class="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg">
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
+                                        <div class="md:col-span-6">
+                                            <flux:field>
+                                                <flux:label>Product</flux:label>
+                                                <flux:select wire:model="items.{{ $index }}.product_id">
+                                                    <option value="">-- Select Product --</option>
+                                                    @foreach ($products as $p)
+                                                        <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                                    @endforeach
+                                                </flux:select>
+                                            </flux:field>
+                                        </div>
+                                        <div class="md:col-span-3">
+                                            <flux:field>
+                                                <flux:label>Requested</flux:label>
+                                                <flux:input type="number"
+                                                    wire:model="items.{{ $index }}.requested_stock" />
+                                            </flux:field>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <flux:field>
+                                                <flux:label>Unit</flux:label>
+                                                <flux:select wire:model="items.{{ $index }}.unit_id">
+                                                    <option value="">-- Select Unit --</option>
+                                                    @if (isset($units) && $units->isNotEmpty())
+                                                        @foreach ($units as $u)
+                                                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                                        @endforeach
+                                                    @else
+                                                        <option value="Box">Box</option>
+                                                        <option value="Carton">Carton</option>
+                                                        <option value="Dozen">Dozen</option>
+                                                        <option value="Pack">Pack</option>
+                                                        <option value="Pieces">Pieces</option>
+                                                    @endif
+                                                </flux:select>
+                                            </flux:field>
+                                        </div>
+                                        <div class="md:col-span-1 text-right pr-2">
+                                            <flux:button variant="danger" size="sm"
+                                                wire:click.prevent="removeItem({{ $index }})">Remove</flux:button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-span-3">
-                                    <flux:field>
-                                        <flux:label>Requested</flux:label>
-                                        <flux:input type="number"
-                                            wire:model="items.{{ $index }}.requested_stock" />
-                                    </flux:field>
-                                </div>
-                                <div class="col-span-3">
-                                    <flux:field>
-                                        <flux:label>Unit</flux:label>
-                                        <flux:select wire:model="items.{{ $index }}.unit_id">
-                                            <option value="">-- Select Unit --</option>
-                                            @if (isset($units) && $units->isNotEmpty())
-                                                @foreach ($units as $u)
-                                                    <option value="{{ $u->id }}">{{ $u->name }}</option>
-                                                @endforeach
-                                            @else
-                                                <option value="Box">Box</option>
-                                                <option value="Carton">Carton</option>
-                                                <option value="Dozen">Dozen</option>
-                                                <option value="Pack">Pack</option>
-                                                <option value="Pieces">Pieces</option>
-                                            @endif
-                                        </flux:select>
-                                    </flux:field>
-                                </div>
-                                <div class="col-span-1 text-right">
-                                    <flux:button variant="danger" size="sm"
-                                        wire:click.prevent="removeItem({{ $index }})">Remove</flux:button>
-                                </div>
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
 
                         <div>
                             <flux:button variant="primary" wire:click.prevent="addItem">Add Item</flux:button>

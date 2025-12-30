@@ -140,9 +140,8 @@ class CreatePOIndex extends Component
 
     public function save()
     {
-        // basic validation for header fields
+        // basic validation for header fields (po_number is generated automatically)
         $this->validate([
-            'po_number' => 'required',
             'date' => 'required|date',
             'warehouse_id' => 'required',
             'items' => 'array',
@@ -162,13 +161,32 @@ class CreatePOIndex extends Component
         ]);
 
         DB::transaction(function () use ($validItems) {
+            // generate po_number only when creating a new PO
             $poData = [
-                'po_number' => $this->po_number,
                 'date' => \Carbon\Carbon::parse($this->date),
                 'warehouse_id' => $this->warehouse_id,
                 'status' => $this->status ?? 1, // 1 = Requested
                 'created_by' => Auth::id(),
             ];
+
+            if (empty($this->selectedId)) {
+                $datePart = Carbon::parse($this->date)->format('Ymd');
+                // find last PO for the same date (by po_number prefix) and increment sequence
+                $last = PurchaseOrder::whereDate('created_at', Carbon::parse($this->date)->toDateString())
+                    ->where('po_number', 'like', "PO-{$datePart}-%")
+                    ->orderBy('po_number', 'desc')
+                    ->value('po_number');
+
+                $seq = 1;
+                if ($last) {
+                    $lastSeq = (int) substr($last, -3);
+                    $seq = $lastSeq + 1;
+                }
+                $poNumber = 'PO-' . $datePart . '-' . str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+                $poData['po_number'] = $poNumber;
+                // keep generated number available in component
+                $this->po_number = $poNumber;
+            }
 
             $po = PurchaseOrder::updateOrCreate(['id' => $this->selectedId], $poData);
 
