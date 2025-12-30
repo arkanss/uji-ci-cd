@@ -243,7 +243,7 @@ class MerchantIndex extends Component
             ->orderBy('created_at', 'desc');
 
         // avoid expensive COUNT(*) on large tables
-        $merchants = $query->simplePaginate(10);
+        $merchants = $query->Paginate(10);
 
         return view('livewire.merchant.merchant-index', [
             'merchants' => $merchants

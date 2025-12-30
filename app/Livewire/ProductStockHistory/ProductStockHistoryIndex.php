@@ -18,7 +18,6 @@ class ProductStockHistoryIndex extends Component
     public $search = '';
     public $selectedHistory = null;
 
-    // Untuk sinkronisasi search di URL
     protected $queryString = ['search' => ['except' => '']];
 
     public function updatedSearch()
@@ -63,8 +62,7 @@ class ProductStockHistoryIndex extends Component
             }
         }
 
-        // use simplePaginate to avoid expensive COUNT(*)
-        $histories = $query->simplePaginate(10);
+        $histories = $query->Paginate(10);
 
         return view('livewire.product-stock-history.product-stock-history-index', compact('histories'));
     }

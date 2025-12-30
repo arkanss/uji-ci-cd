@@ -18,6 +18,10 @@ class DPItemRequestIndex extends Component
 
     protected $paginationTheme = 'tailwind';
 
+    protected $casts = [
+        'status' => \App\Enums\DPItemRequestsEnum::class,
+    ];
+
     public function render()
     {
         return view('livewire.d-p-item-request.d-p-item-request-index', [

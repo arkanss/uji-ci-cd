@@ -26,7 +26,9 @@
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                         <td class="px-4 py-3 font-mono text-sm">{{ $request->code }}</td>
                         <td class="px-4 py-3">
-                            <flux:badge>{{ $request->status->label() }}</flux:badge>
+                            <flux:badge :color="$request->status->color()">
+                                {{ $request->status->label() }}
+                            </flux:badge>
                         </td>
                         <td class="px-4 py-3 text-sm">{{ $request->user?->name ?? '-' }}</td>
                         <td class="px-4 py-3 text-sm text-zinc-500">{{ $request->created_at->format('d M Y H:i') }}</td>

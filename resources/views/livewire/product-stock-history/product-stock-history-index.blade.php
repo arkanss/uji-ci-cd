@@ -28,7 +28,7 @@
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                         wire:key="{{ $history->id }}">
                         <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                            {{ $history->created_at->format('d/M/Y, H:i') }}
+                            {{ $history->created_at->format('d M Y H:i') }}
                         </td>
                         <td class="px-4 py-3">
                             <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -131,7 +131,7 @@
             <div class="text-center">
                 <div class="text-[11px] text-zinc-400 uppercase tracking-widest">Waktu Kejadian</div>
                 <div class="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-                    {{ $selectedHistory?->created_at?->format('d F Y - H:i:s') }}
+                    {{ $selectedHistory?->created_at?->format('d M Y H:i') }}
                 </div>
             </div>
 

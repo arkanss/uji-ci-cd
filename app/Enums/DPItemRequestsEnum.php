@@ -23,9 +23,9 @@ enum DPItemRequestsEnum: int
     {
         return match ($this) {
             self::Requested => 'warning',
-            self::Processed => 'info',
+            self::Processed => 'yellow',
             self::Opened => 'green',
-            self::Closed => 'danger',
+            self::Closed => 'red',
         };
     }
 

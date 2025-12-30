@@ -136,8 +136,7 @@ class OperationalCostIndex extends Component
             }
         }
 
-        // use simplePaginate to avoid an expensive COUNT(*) on large tables
-        $costs = $query->simplePaginate(10);
+        $costs = $query->Paginate(10);
 
         return view('livewire.operational.operational-cost-index', compact('costs'));
     }

@@ -145,7 +145,7 @@
                     <div
                         class="size-20 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-200 dark:border-zinc-700">
                         @if ($selectedUser->avatar)
-                            <img src="{{ Storage::url($selectedUser->avatar) }}" class="object-cover size-full">
+                            <img src="{{ $selectedUser->avatar }}" class="object-cover size-full">
                         @else
                             <flux:icon.user class="size-10 text-zinc-400" />
                         @endif

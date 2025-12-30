@@ -187,7 +187,7 @@ class PointManagementIndex extends Component
             }
         }
 
-        $points = $query->orderBy('created_at', 'desc')->simplePaginate(10);
+        $points = $query->orderBy('created_at', 'desc')->Paginate(10);
 
         $parentPoints = Point::whereNull('parent_id')->select('id', 'name')->get();
 

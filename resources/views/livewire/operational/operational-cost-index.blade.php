@@ -35,7 +35,7 @@
                                 Rp {{ number_format($cost->amount, 0, ',', '.') }}
                             </td>
                             <td class="px-4 py-3 text-sm text-zinc-500">
-                                {{ \Carbon\Carbon::parse($cost->date)->format('M d, Y') }}
+                                {{ \Carbon\Carbon::parse($cost->date)->format('d M Y H:i') }}
                             </td>
                             <td class="px-4 py-3 text-sm">
                                 @if ($cost->creator)

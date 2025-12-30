@@ -104,7 +104,7 @@ class ProductIndex extends Component
             }
         }
 
-        $products = $query->orderBy('created_at', 'desc')->simplePaginate(10);
+        $products = $query->orderBy('created_at', 'desc')->Paginate(10);
         $categories = ProductCategory::select('id', 'name')->orderBy('name')->get();
 
         return view('livewire.product.product-index', compact('products', 'categories'));

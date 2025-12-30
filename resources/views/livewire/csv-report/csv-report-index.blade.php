@@ -45,7 +45,7 @@
                         </td>
 
                         <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                            {{ $job->created_at->format('d/M/Y, H:i') }}
+                            {{ $job->created_at->format('d M Y H:i') }}
                         </td>
 
                         <td class="px-4 py-3 text-center">
@@ -135,7 +135,7 @@
                     </div>
                     <div>
                         <div class="text-xs font-medium text-zinc-500 uppercase tracking-wider">CSV Upload Date</div>
-                        <div class="text-sm mt-1">{{ $selectedJob?->created_at?->format('d/M/Y, H:i') }}</div>
+                        <div class="text-sm mt-1">{{ $selectedJob?->created_at?->format('d M Y H:i') }}</div>
                     </div>
                     <div>
                         <div class="text-xs font-medium text-zinc-500 uppercase tracking-wider">Total Records</div>

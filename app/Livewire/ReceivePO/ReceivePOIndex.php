@@ -31,8 +31,8 @@ class ReceivePOIndex extends Component
     {
         $query = PurchaseOrder::select('id', 'po_number', 'created_at', 'status', 'completed_by', 'completed_at', 'warehouse_id')
             ->with('completedBy:id,name')
-            ->whereIn('status', [1, 2]) // include Requested and Completed
-            ->orderBy('status') // Requested (1) Completed (2)
+            ->whereIn('status', [1, 2])
+            ->orderBy('status')
             ->orderBy('created_at', 'desc');
 
         $search = trim($this->search ?? '');

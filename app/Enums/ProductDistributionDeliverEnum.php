@@ -18,8 +18,8 @@ enum ProductDistributionDeliverEnum: int
     public function color() : string 
     {
         return match ($this) {
-            self::Completed => 'success',
-            self::InCompleted => 'info',
+            self::Completed => 'green',
+            self::InCompleted => 'yellowp',
         };    
     }
 

@@ -149,7 +149,7 @@ class ProductCategoryIndex extends Component
             }
         }
 
-        $categories = $query->simplePaginate(10);
+        $categories = $query->Paginate(10);
 
         return view('livewire.productcategory.category-index', compact('categories'));
     }

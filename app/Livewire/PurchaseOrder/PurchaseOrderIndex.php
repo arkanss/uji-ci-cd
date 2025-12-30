@@ -34,10 +34,18 @@ class PurchaseOrderIndex extends Component
     public $selectedOrders = [];
     public $selectAll = false;
     public $commonStatus = null;
+    public $activeTab = 'all';
 
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'activeTab' => ['except' => 'all'],
+    ];
 
-
-    protected $queryString = ['search' => ['except' => '']];
+    public function setTab(string $tab)
+    {
+        $this->activeTab = $tab;
+        $this->resetPage();
+    }
 
     public function showPayment(string $orderId)
     {
@@ -405,13 +413,48 @@ class PurchaseOrderIndex extends Component
             ->with([
                 'requester:id,name',
                 'verifier:id,name',
-                'payments' => function ($q) {
-                    $q->orderBy('created_at', 'desc');
-                },
-            ])
-            ->orderByRaw('CASE WHEN status = 1 THEN 1 WHEN status = 2 THEN 2 WHEN status = 3 THEN 3 WHEN status = 4 THEN 4 WHEN status = 5 THEN 5 WHEN status = 6 THEN 6 WHEN status = 7 THEN 7 WHEN status = 8 THEN 8 ELSE 9 END')
+                'payments' => fn ($q) => $q->orderBy('created_at', 'desc'),
+            ]);
+
+        match ($this->activeTab) {
+            'requested' => $orders->where('status', OrderRequestEnum::Requested),
+
+            'unpaid' => $orders->whereHas('payments', function ($q) {
+                $q->whereIn('status', [
+                    ProductDistributionPaymentStatusEnum::Pending,
+                    ProductDistributionPaymentStatusEnum::WaitingVerification,
+                ]);
+            })->orWhereDoesntHave('payments'),
+
+            'paid' => $orders->whereHas('payments', function ($q) {
+                $q->where('status', ProductDistributionPaymentStatusEnum::Paid);
+            }),
+
+            'need_to_process' => $orders->where('status', OrderRequestEnum::Verified),
+
+            'in_process' => $orders->where('status', OrderRequestEnum::Processing),
+
+            'delivery' => $orders->whereIn('status', [
+                OrderRequestEnum::Delivering,
+                OrderRequestEnum::Delivered,
+            ]),
+
+            default => null,
+        };
+
+        $orders = $orders
+            ->orderByRaw('CASE 
+                WHEN status = 1 THEN 1 
+                WHEN status = 2 THEN 2 
+                WHEN status = 3 THEN 3 
+                WHEN status = 4 THEN 4 
+                WHEN status = 5 THEN 5 
+                WHEN status = 6 THEN 6 
+                WHEN status = 7 THEN 7 
+                WHEN status = 8 THEN 8 
+                ELSE 9 END')
             ->orderBy('created_at', 'desc')
-            ->simplePaginate(10);
+            ->paginate(10);
 
         return view('livewire.purchase-order.purchase-order-index', compact('orders'));
     }

@@ -56,10 +56,10 @@
                                 <span class="line-clamp-2">{{ $category->description ?: '-' }}</span>
                             </td>
                             <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                                {{ $category->created_at->format('M d, Y H:i') }}
+                                {{ $category->created_at->format('d M Y H:i') }}
                             </td>
                             <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                                {{ $category->updated_at->format('M d, Y H:i') }}
+                                {{ $category->updated_at->format('d M Y H:i') }}
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <flux:dropdown>
@@ -123,7 +123,7 @@
                             @if ($image)
                                 <img src="{{ $image->temporaryUrl() }}" class="object-cover w-full h-full">
                             @elseif ($oldImage)
-                                <img src="{{ Storage::disk('public')->url($oldImage) }}"
+                                <img src="{{ $oldImage }}"
                                     class="object-cover w-full h-full">
                             @else
                                 <div class="flex flex-col items-center gap-2 text-zinc-400">

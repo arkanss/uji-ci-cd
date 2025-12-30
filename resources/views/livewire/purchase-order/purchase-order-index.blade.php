@@ -5,6 +5,39 @@
     </div>
 
     <div class="space-y-4">
+        <div class="w-full flex justify-center py-4">
+            <div class="p-1 bg-zinc-5/50 dark:bg-white/5 rounded-full">
+
+                <div
+                    class="inline-flex items-center gap-4 p-1 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/50 shadow-sm">
+                    @php
+                        $tabs = [
+                            'all' => ['label' => 'All', 'icon' => 'squares-2x2'],
+                            'requested' => ['label' => 'Requested', 'icon' => 'clipboard-document'],
+                            'unpaid' => ['label' => 'Unpaid', 'icon' => 'banknotes'],
+                            'paid' => ['label' => 'Paid', 'icon' => 'check-badge'],
+                            'need_to_process' => ['label' => 'Need to Process', 'icon' => 'clock'],
+                            'in_process' => ['label' => 'In Process', 'icon' => 'arrow-path'],
+                            'delivery' => ['label' => 'Delivery', 'icon' => 'truck'],
+                        ];
+                    @endphp
+
+                    @foreach ($tabs as $key => $tab)
+                        <button wire:click="setTab('{{ $key }}')" wire:loading.attr="disabled"
+                            class="
+                        inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold
+                        rounded-full transition-all duration-300
+                        {{ $activeTab === $key
+                            ? 'bg-emerald-600 text-white shadow-sm scale-105'
+                            : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-10/50 hover:text-emerald-600 dark:text-zinc-900 dark:hover:text-emerald-100' }}">
+                            <flux:icon :name="$tab['icon']" class="size-4" />
+                            <span>{{ $tab['label'] }}</span>
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
         <div class="flex justify-between items-center">
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search orders..."
                 class="max-w-sm" />
@@ -173,7 +206,8 @@
                     </div>
                     <div class="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
                         <table class="w-full text-left border-collapse">
-                            <thead class="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
+                            <thead
+                                class="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
                                 <tr>
                                     <th class="px-4 py-2.5 text-[11px] font-bold text-zinc-500 uppercase">Produk</th>
                                     <th class="px-4 py-2.5 text-[11px] font-bold text-zinc-500 uppercase text-center">
@@ -324,26 +358,7 @@
                         </div>
 
                         @if ($payment->proof_of_payment)
-                            @php
-                                $proof = $payment->proof_of_payment;
-                                if (
-                                    is_string($proof) &&
-                                    (str_starts_with($proof, 'http://') || str_starts_with($proof, 'https://'))
-                                ) {
-                                    $src = $proof;
-                                } else {
-                                    try {
-                                        $disk = env('FILESYSTEM_DISK', 'public');
-                                        $src = \Illuminate\Support\Facades\Storage::disk($disk)->url(
-                                            ltrim($proof, '/'),
-                                        );
-                                    } catch (\Throwable $e) {
-                                        $src = asset('storage/' . ltrim($proof, '/'));
-                                    }
-                                }
-                            @endphp
-
-                            <img src="{{ $src }}" class="rounded border max-h-48" />
+                            <img src="{{ $payment->proof_of_payment }}" class="rounded border max-h-48" />
                         @endif
 
                         @if ($payment->status === \App\Enums\ProductDistributionPaymentStatusEnum::Rejected)
@@ -405,25 +420,29 @@
             <div class="space-y-4">
                 <div>
                     <flux:heading>Bulk Action: {{ $commonStatus->label() }}</flux:heading>
-                    <flux:subheading>Aksi ini akan diterapkan pada {{ count($selectedOrders) }} pesanan yang dipilih.</flux:subheading>
+                    <flux:subheading>Aksi ini akan diterapkan pada {{ count($selectedOrders) }} pesanan yang dipilih.
+                    </flux:subheading>
                 </div>
 
                 <div class="p-4 border border-zinc-200 dark:border-zinc-700 rounded-lg space-y-3">
                     @if ($commonStatus === \App\Enums\OrderRequestEnum::Requested)
-                        <p class="text-sm">Verifikasi semua pesanan yang dipilih? Semua item akan disetujui sesuai jumlah yang diminta.</p>
+                        <p class="text-sm">Verifikasi semua pesanan yang dipilih? Semua item akan disetujui sesuai
+                            jumlah yang diminta.</p>
                         <div class="flex justify-end gap-2">
-                             <flux:modal.close>
+                            <flux:modal.close>
                                 <flux:button variant="ghost">Batal</flux:button>
                             </flux:modal.close>
-                            <flux:button wire:click="bulkVerifyOrders" variant="primary">Verifikasi Pesanan</flux:button>
+                            <flux:button wire:click="bulkVerifyOrders" variant="primary">Verifikasi Pesanan
+                            </flux:button>
                         </div>
                     @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Verified)
                         <p class="text-sm">Ubah status semua pesanan yang dipilih menjadi "Processing"?</p>
                         <div class="flex justify-end gap-2">
-                             <flux:modal.close>
+                            <flux:modal.close>
                                 <flux:button variant="ghost">Batal</flux:button>
                             </flux:modal.close>
-                            <flux:button wire:click="bulkMarkAsProcessing" color="blue">Tandai Processing</flux:button>
+                            <flux:button wire:click="bulkMarkAsProcessing" color="blue">Tandai Processing
+                            </flux:button>
                         </div>
                     @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Processing)
                         <p class="text-sm">Pilih driver untuk ditugaskan ke semua pesanan yang dipilih.</p>
@@ -436,31 +455,34 @@
                             @endforeach
                         </flux:select>
                         <div class="flex justify-end gap-2">
-                             <flux:modal.close>
+                            <flux:modal.close>
                                 <flux:button variant="ghost">Batal</flux:button>
                             </flux:modal.close>
-                            <flux:button wire:click="bulkAssignDriverAndProcess" color="primary" :disabled="!$selectedDriverId">Assign Driver</flux:button>
+                            <flux:button wire:click="bulkAssignDriverAndProcess" color="primary"
+                                :disabled="!$selectedDriverId">Assign Driver</flux:button>
                         </div>
                     @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Processed)
                         <p class="text-sm">Ubah status semua pesanan yang dipilih menjadi "Delivering"?</p>
                         <div class="flex justify-end gap-2">
-                             <flux:modal.close>
+                            <flux:modal.close>
                                 <flux:button variant="ghost">Batal</flux:button>
                             </flux:modal.close>
-                            <flux:button wire:click="bulkMarkAsDelivering" color="blue">Tandai Delivering</flux:button>
+                            <flux:button wire:click="bulkMarkAsDelivering" color="blue">Tandai Delivering
+                            </flux:button>
                         </div>
                     @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Delivering)
                         <p class="text-sm">Ubah status semua pesanan yang dipilih menjadi "Delivered"?</p>
                         <div class="flex justify-end gap-2">
-                             <flux:modal.close>
+                            <flux:modal.close>
                                 <flux:button variant="ghost">Batal</flux:button>
                             </flux:modal.close>
-                            <flux:button wire:click="bulkMarkAsDelivered" color="green">Tandai Delivered</flux:button>
+                            <flux:button wire:click="bulkMarkAsDelivered" color="green">Tandai Delivered
+                            </flux:button>
                         </div>
                     @else
                         <p class="text-sm text-zinc-500">Tidak ada aksi massal yang tersedia untuk status ini.</p>
-                         <div class="flex justify-end gap-2">
-                             <flux:modal.close>
+                        <div class="flex justify-end gap-2">
+                            <flux:modal.close>
                                 <flux:button variant="ghost">Tutup</flux:button>
                             </flux:modal.close>
                         </div>

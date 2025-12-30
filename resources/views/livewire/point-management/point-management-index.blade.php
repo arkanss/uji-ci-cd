@@ -96,10 +96,7 @@
                             @if ($icon)
                                 <img src="{{ $icon->temporaryUrl() }}" class="object-contain w-full h-full p-3">
                             @elseif ($oldIcon)
-                                <img src="{{ \Illuminate\Support\Str::startsWith($oldIcon, ['http://', 'https://'])
-                                    ? $oldIcon
-                                    : Storage::disk('public')->url($oldIcon) }}"
-                                    class="object-contain w-full h-full p-3">
+                                <img src="{{ $oldIcon }}" class="object-contain w-full h-full p-3">
                             @else
                                 <div class="flex flex-col items-center gap-2 text-zinc-400">
                                     <flux:icon.photo class="size-8" />

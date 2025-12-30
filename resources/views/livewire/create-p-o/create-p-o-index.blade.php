@@ -20,20 +20,11 @@
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                         <tr>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">PO
-                                Number
-                            </th>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Created
-                                By
-                            </th>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Status
-                            </th>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Created
-                                at
-                            </th>
-                            <th
-                                class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase text-right">
-                                Action</th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">PO Number</th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Created By</th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Status</th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Created at</th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -54,7 +45,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-                                    {{ $po->created_at->format('d/m/Y H:i') }}</td>
+                                    {{ $po->created_at->format('d M Y H:i') }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex justify-end">
                                         <flux:dropdown>

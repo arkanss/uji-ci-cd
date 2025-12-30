@@ -21,7 +21,7 @@
                 @forelse ($deliveries as $delivery)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                         wire:key="{{ $delivery->id }}">
-                        <td class="px-4 py-3 text-sm font-mono font-bold text-green-600 dark:text-green-500">
+                        <td class="px-4 py-3 font-mono text-sm">
                             {{ $delivery->code }}
                         </td>
                         <td class="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
@@ -31,11 +31,12 @@
                             {{ $delivery->distributions->count() }} Items
                         </td>
                         <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                            {{ $delivery->date->format('d/M/Y, H:i') }}
+                            {{ $delivery->date->format('d M Y H:i') }}
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <flux:badge size="sm" variant="outline" class="font-bold">
-                                {{ $delivery->status->name ?? $delivery->status }}
+                            <flux:badge size="sm" variant="outline" class="font-bold"
+                                :color="$delivery->status instanceof \App\Enums\ProductDistributionDeliverEnum ? $delivery->status->color() : 'gray'">
+                                {{ $delivery->status instanceof \App\Enums\ProductDistributionDeliverEnum ? $delivery->status->label() : $delivery->status }}
                             </flux:badge>
                         </td>
                         <td class="px-4 py-3 text-right">
@@ -99,7 +100,7 @@
                     <div class="border border-zinc-200 dark:border-zinc-700 rounded-md p-3">
                         <p class="text-xs text-zinc-500 mb-1">Delivery Date</p>
                         <p class="font-medium">
-                            {{ $selectedDelivery?->date?->format('d M Y, H:i') }}
+                            {{ $selectedDelivery?->date?->format('d M Y H:i') }}
                         </p>
                     </div>
                 </div>

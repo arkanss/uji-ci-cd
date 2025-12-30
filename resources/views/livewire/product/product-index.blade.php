@@ -108,7 +108,7 @@
                                                 <img src="{{ $form->image->temporaryUrl() }}"
                                                     class="object-cover size-full">
                                             @elseif (!empty($form->oldImage))
-                                                <img src="{{ Storage::url($form->oldImage) }}"
+                                                <img src="{{ $form->oldImage }}"
                                                     class="object-cover size-full">
                                             @else
                                                 <div class="text-center">
@@ -405,7 +405,7 @@
                 <div class="flex items-start gap-4">
                     <div class="size-24 rounded-lg border overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0">
                         @if ($selectedProduct->image)
-                            <img src="{{ Storage::url($selectedProduct->image) }}" class="object-cover size-full">
+                            <img src="{{ $selectedProduct->image }}" class="object-cover size-full">
                         @else
                             <flux:icon.photo class="p-6 text-zinc-300 size-full" />
                         @endif
