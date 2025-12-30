@@ -31,6 +31,12 @@ class PurchaseOrderIndex extends Component
     public $paymentRejectReason = '';
     public $verifiablePayment = null;
 
+    public $selectedOrders = [];
+    public $selectAll = false;
+    public $commonStatus = null;
+
+
+
     protected $queryString = ['search' => ['except' => '']];
 
     public function showPayment(string $orderId)
@@ -59,7 +65,9 @@ class PurchaseOrderIndex extends Component
             'status' => ProductDistributionPaymentStatusEnum::Paid,
         ]);
 
+        $this->verifiablePayment = null;
         $this->modal('payment-modal')->close();
+        $this->dispatch('show-toast', ['message' => 'Payment approved successfully.', 'type' => 'success']);
     }
 
     public function rejectPayment()
@@ -81,7 +89,7 @@ class PurchaseOrderIndex extends Component
         ]);
 
         $this->paymentRejectReason = '';
-        $this->modal('payment-modal')->close();
+        $this->dispatch('show-toast', ['message' => 'Payment has been rejected.', 'type' => 'success']);
     }
 
     public function showDetail($id)
@@ -102,9 +110,9 @@ class PurchaseOrderIndex extends Component
 
     }
 
-    public function verifyOrder($id)
+    public function verifyOrder(string $orderId)
     {
-        $order = ProductDistribution::with('items')->findOrFail($id);
+        $order = ProductDistribution::with('items')->findOrFail($orderId);
 
         if ($order->status !== OrderRequestEnum::Requested) {
             abort(403);
@@ -133,6 +141,8 @@ class PurchaseOrderIndex extends Component
         });
 
         $this->approvedStocks = [];
+        $this->dispatch('show-toast', ['message' => 'Order berhasil diverifikasi!', 'type' => 'success']);
+        $this->selectedOrder->refresh();
         $this->modal('detail-modal')->close();
     }
 
@@ -233,8 +243,151 @@ class PurchaseOrderIndex extends Component
         ]);
 
         $this->rejectReason = '';
-        $this->modal('detail-modal')->close();
-        $this->modal('reject-modal')->close();
+        $this->dispatch('show-toast', ['message' => 'Order berhasil ditolak.', 'type' => 'success']);
+    }
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selectedOrders = ProductDistribution::query()
+                ->where('code', 'like', '%' . $this->search . '%')
+                ->pluck('id')
+                ->map(fn ($id) => (string) $id)
+                ->toArray();
+        } else {
+            $this->selectedOrders = [];
+        }
+    }
+
+    public function showBulkActionModal()
+    {
+        if (empty($this->selectedOrders)) {
+            return;
+        }
+
+        $statuses = ProductDistribution::whereIn('id', $this->selectedOrders)->pluck('status')->unique();
+
+        if ($statuses->count() > 1) {
+            $this->dispatch('show-toast', [
+                'message' => 'Silakan pilih pesanan dengan status yang sama untuk melakukan aksi massal.',
+                'type' => 'error'
+            ]);
+            return;
+        }
+
+        $this->commonStatus = $statuses->first();
+        $this->modal('bulk-action-modal')->show();
+    }
+
+    public function bulkVerifyOrders()
+    {
+        // For this action, we assume all selected items are in 'Requested' status.
+        // We also need to approve all items with their requested stock.
+        $orders = ProductDistribution::with('items')->whereIn('id', $this->selectedOrders)->get();
+
+        DB::transaction(function () use ($orders) {
+            foreach ($orders as $order) {
+                if ($order->status !== OrderRequestEnum::Requested) continue;
+
+                foreach ($order->items as $item) {
+                    $item->update([
+                        'approved_stock' => $item->requested_stock,
+                    ]);
+                }
+                $order->update([
+                    'status' => OrderRequestEnum::Verified,
+                    'verified_by' => Auth::id(),
+                ]);
+            }
+        });
+
+        $this->dispatch('show-toast', ['message' => 'Pesanan yang dipilih telah diverifikasi.', 'type' => 'success']);
+        $this->modal('bulk-action-modal')->close();
+        $this->selectedOrders = [];
+        $this->selectAll = false;
+    }
+
+    public function bulkMarkAsProcessing()
+    {
+        ProductDistribution::whereIn('id', $this->selectedOrders)
+            ->where('status', OrderRequestEnum::Verified)
+            ->update(['status' => OrderRequestEnum::Processing]);
+
+        $this->dispatch('show-toast', ['message' => 'Pesanan yang dipilih telah diproses.', 'type' => 'success']);
+        $this->modal('bulk-action-modal')->close();
+        $this->selectedOrders = [];
+        $this->selectAll = false;
+    }
+
+    public function bulkAssignDriverAndProcess()
+    {
+        $this->validate([
+            'selectedDriverId' => 'required|exists:users,id',
+        ]);
+
+        $orders = ProductDistribution::whereIn('id', $this->selectedOrders)
+            ->where('status', OrderRequestEnum::Processing)
+            ->get();
+
+        DB::transaction(function () use ($orders) {
+            foreach($orders as $order) {
+                $delivery = ProductDistributionDeliver::create([
+                    'code' => 'DEL-' . now()->format('YmdHis') . '-' . substr(md5(uniqid()), 0, 4),
+                    'status' => ProductDistributionDeliverEnum::InCompleted,
+                    'driver_id' => $this->selectedDriverId,
+                    'date' => now(),
+                ]);
+
+                $order->update([
+                    'status' => OrderRequestEnum::Processed,
+                    'product_distribution_delivery_id' => $delivery->id,
+                ]);
+            }
+        });
+        
+        $this->dispatch('show-toast', ['message' => 'Driver telah ditugaskan ke pesanan yang dipilih.', 'type' => 'success']);
+        $this->modal('bulk-action-modal')->close();
+        $this->selectedOrders = [];
+        $this->selectedDriverId = null;
+        $this->selectAll = false;
+    }
+
+    public function bulkMarkAsDelivering()
+    {
+        ProductDistribution::whereIn('id', $this->selectedOrders)
+            ->where('status', OrderRequestEnum::Processed)
+            ->update(['status' => OrderRequestEnum::Delivering]);
+        
+        $this->dispatch('show-toast', ['message' => 'Pesanan yang dipilih telah dalam pengiriman.', 'type' => 'success']);
+        $this->modal('bulk-action-modal')->close();
+        $this->selectedOrders = [];
+        $this->selectAll = false;
+    }
+
+    public function bulkMarkAsDelivered()
+    {
+        $orders = ProductDistribution::with('delivery')->whereIn('id', $this->selectedOrders)->get();
+
+        DB::transaction(function() use ($orders) {
+            foreach($orders as $order) {
+                if ($order->status !== OrderRequestEnum::Delivering) continue;
+
+                $order->update([
+                    'status' => OrderRequestEnum::Delivered,
+                ]);
+
+                if ($order->delivery) {
+                    $order->delivery->update([
+                        'status' => ProductDistributionDeliverEnum::Completed,
+                    ]);
+                }
+            }
+        });
+
+        $this->dispatch('show-toast', ['message' => 'Pesanan yang dipilih telah terkirim.', 'type' => 'success']);
+        $this->modal('bulk-action-modal')->close();
+        $this->selectedOrders = [];
+        $this->selectAll = false;
     }
 
     public function getDriversProperty()

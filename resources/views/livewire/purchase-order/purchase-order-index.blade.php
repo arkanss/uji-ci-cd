@@ -5,14 +5,23 @@
     </div>
 
     <div class="space-y-4">
-        <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search orders..."
-            class="max-w-sm" />
+        <div class="flex justify-between items-center">
+            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search orders..."
+                class="max-w-sm" />
+
+            <flux:button wire:click="showBulkActionModal" :disabled="!count($selectedOrders)" icon="bolt">
+                Bulk Action
+            </flux:button>
+        </div>
 
         <div
             class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                     <tr>
+                        <th class="p-2 w-4">
+                            <flux:checkbox wire:model.live="selectAll" />
+                        </th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Code</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Order Status</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Payment</th>
@@ -23,8 +32,11 @@
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @forelse ($orders as $order)
-                        <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                        <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors {{ in_array($order->id, $selectedOrders) ? 'bg-blue-50 dark:bg-blue-900/20' : '' }}"
                             wire:key="{{ $order->id }}">
+                            <td class="p-2">
+                                <flux:checkbox wire:model.live="selectedOrders" value="{{ $order->id }}" />
+                            </td>
                             <td class="px-4 py-3 text-sm font-bold text-zinc-900 dark:text-zinc-100">
                                 {{ $order->code }}
                             </td>
@@ -82,7 +94,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-12 text-center text-zinc-500">Belum ada request pesanan.
+                            <td colspan="7" class="px-4 py-12 text-center text-zinc-500">Belum ada request pesanan.
                             </td>
                         </tr>
                     @endforelse
@@ -228,9 +240,7 @@
             <div
                 class="p-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap justify-end gap-3 rounded-b-lg">
 
-                <flux:modal.close>
-                    <flux:button variant="ghost" size="sm">Tutup</flux:button>
-                </flux:modal.close>
+
 
                 @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Requested)
                     <flux:modal.trigger name="reject-modal">
@@ -240,7 +250,7 @@
                     </flux:modal.trigger>
 
                     <flux:button variant="primary" size="sm" icon="check"
-                        wire:click="verifyOrder('{{ $selectedOrder->id }}')" wire:confirm="Verifikasi pesanan ini?">
+                        wire:click="verifyOrder('{{ $selectedOrder->id }}')">
                         Verifikasi
                     </flux:button>
                 @endif
@@ -384,5 +394,77 @@
                     Tolak</flux:button>
             </div>
         </div>
+    </flux:modal>
+
+
+
+
+    <flux:modal name="bulk-action-modal" class="md:w-[500px]">
+        @if ($commonStatus)
+            <div class="space-y-4">
+                <div>
+                    <flux:heading>Bulk Action: {{ $commonStatus->label() }}</flux:heading>
+                    <flux:subheading>Aksi ini akan diterapkan pada {{ count($selectedOrders) }} pesanan yang dipilih.</flux:subheading>
+                </div>
+
+                <div class="p-4 border border-zinc-200 dark:border-zinc-700 rounded-lg space-y-3">
+                    @if ($commonStatus === \App\Enums\OrderRequestEnum::Requested)
+                        <p class="text-sm">Verifikasi semua pesanan yang dipilih? Semua item akan disetujui sesuai jumlah yang diminta.</p>
+                        <div class="flex justify-end gap-2">
+                             <flux:modal.close>
+                                <flux:button variant="ghost">Batal</flux:button>
+                            </flux:modal.close>
+                            <flux:button wire:click="bulkVerifyOrders" variant="primary">Verifikasi Pesanan</flux:button>
+                        </div>
+                    @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Verified)
+                        <p class="text-sm">Ubah status semua pesanan yang dipilih menjadi "Processing"?</p>
+                        <div class="flex justify-end gap-2">
+                             <flux:modal.close>
+                                <flux:button variant="ghost">Batal</flux:button>
+                            </flux:modal.close>
+                            <flux:button wire:click="bulkMarkAsProcessing" color="blue">Tandai Processing</flux:button>
+                        </div>
+                    @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Processing)
+                        <p class="text-sm">Pilih driver untuk ditugaskan ke semua pesanan yang dipilih.</p>
+                        <flux:select wire:model.live="selectedDriverId" placeholder="Pilih Driver" class="w-full">
+                            @foreach ($this->drivers as $driver)
+                                <option value="{{ $driver->id }}">
+                                    {{ $driver->name }}
+                                </option>
+                            @endforeach
+                        </flux:select>
+                        <div class="flex justify-end gap-2">
+                             <flux:modal.close>
+                                <flux:button variant="ghost">Batal</flux:button>
+                            </flux:modal.close>
+                            <flux:button wire:click="bulkAssignDriverAndProcess" color="primary" :disabled="!$selectedDriverId">Assign Driver</flux:button>
+                        </div>
+                    @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Processed)
+                        <p class="text-sm">Ubah status semua pesanan yang dipilih menjadi "Delivering"?</p>
+                        <div class="flex justify-end gap-2">
+                             <flux:modal.close>
+                                <flux:button variant="ghost">Batal</flux:button>
+                            </flux:modal.close>
+                            <flux:button wire:click="bulkMarkAsDelivering" color="blue">Tandai Delivering</flux:button>
+                        </div>
+                    @elseif ($commonStatus === \App\Enums\OrderRequestEnum::Delivering)
+                        <p class="text-sm">Ubah status semua pesanan yang dipilih menjadi "Delivered"?</p>
+                        <div class="flex justify-end gap-2">
+                             <flux:modal.close>
+                                <flux:button variant="ghost">Batal</flux:button>
+                            </flux:modal.close>
+                            <flux:button wire:click="bulkMarkAsDelivered" color="green">Tandai Delivered</flux:button>
+                        </div>
+                    @else
+                        <p class="text-sm text-zinc-500">Tidak ada aksi massal yang tersedia untuk status ini.</p>
+                         <div class="flex justify-end gap-2">
+                             <flux:modal.close>
+                                <flux:button variant="ghost">Tutup</flux:button>
+                            </flux:modal.close>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
     </flux:modal>
 </div>
