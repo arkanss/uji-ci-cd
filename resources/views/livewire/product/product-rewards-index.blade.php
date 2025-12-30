@@ -33,13 +33,8 @@
                             <td class="px-4 py-3 text-sm font-mono text-zinc-600">{{ $reward->amount }}</td>
                             <td class="px-4 py-3 text-sm">{{ $reward->reward_type ?? '-' }}</td>
                             
-<<<<<<< HEAD
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $reward->created_at?->format('d M Y H:i') }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $reward->updated_at?->format('d M Y H:i') }}</td>
-=======
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $reward->created_at }}</td>
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $reward->updated_at }}</td>
->>>>>>> 00a011c (fix: Product Rewards layout and auto-close Operational Cost modal on submit)
                             <td class="px-4 py-3 text-right text-zinc-500">
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
