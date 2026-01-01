@@ -1,0 +1,68 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+.docker/*.yml
+Dockerfile
+.dockerignore
+
+# CI/CD
+.github
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Laravel
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+node_modules
+vendor
+
+# Storage
+storage/*.key
+storage/app/*
+!storage/app/.gitignore
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/testing/*
+!storage/framework/testing/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+
+# Build artifacts
+public/hot
+public/storage
+public/build
+
+# Testing
+tests
+phpunit.xml
+.phpunit.cache
+
+# Documentation
+*.md
+README.md
+CHANGELOG.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+.npm
+.yarn
