@@ -1,6 +1,6 @@
 <div class="p-6 max-w-7xl mx-auto">
     <div class="mb-6">
-        <flux:heading size="xl" class="mb-1">Purchase Orders</flux:heading>
+        <flux:heading size="xl" class="mb-1">Outlet Orders</flux:heading>
         <flux:subheading>Monitor, verify, and track purchase order status.</flux:subheading>
     </div>
 
@@ -60,6 +60,8 @@
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Payment</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Requester</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Verified By</th>
+                        <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Outlet</th>
+                        <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Order Type</th>
                         <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase text-right">Actions</th>
                     </tr>
                 </thead>
@@ -114,6 +116,32 @@
                                 @endif
                             </td>
 
+                            <td class="px-4 py-3 text-sm">
+                                @if ($order->outlet)
+                                    <div class="flex flex-col">
+                                        <span class="font-medium text-zinc-900 dark:text-zinc-100">
+                                            {{ $order->outlet->name }}
+                                        </span>
+                                        <span class="text-xs text-zinc-500">
+                                            {{ $order->outlet->code }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <span class="text-zinc-400 italic text-xs">Outlet not found</span>
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-3 text-sm">
+                                @if ($order->order_type)
+                                    <flux:badge :color="$order->order_type->color()" variant="subtle" size="sm"
+                                        :icon="$order->order_type->icon()">
+                                        {{ $order->order_type->label() }}
+                                    </flux:badge>
+                                @else
+                                    <span class="text-zinc-400 italic text-xs">-</span>
+                                @endif
+                            </td>
+
                             <td class="px-4 py-3 text-right flex justify-end gap-2">
                                 <flux:button variant="ghost" size="sm" icon="eye"
                                     wire:click="showDetail('{{ $order->id }}')" />
@@ -137,7 +165,7 @@
         <div class="mt-4">{{ $orders->links() }}</div>
     </div>
 
-    <flux:modal name="detail-modal" class="md:w-[700px] space-y-0 p-0">
+    <flux:modal name="detail-modal" class="w-full max-w-6xl space-y-0 p-0">
         @if ($selectedOrder)
             <div class="p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30">
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -175,28 +203,69 @@
             </div>
 
             <div class="p-6 space-y-8">
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
-                    <flux:field>
-                        <flux:label class="text-[11px] uppercase tracking-wider">Verified By</flux:label>
-                        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            {{ $selectedOrder->verifier->name ?? '-' }}
-                        </p>
-                    </flux:field>
+                <div
+                    class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-zinc-50/50 dark:bg-white/5 rounded-xl border border-zinc-100 dark:border-zinc-800">
 
-                    <flux:field>
-                        <flux:label class="text-[11px] uppercase tracking-wider">Order Status</flux:label>
-                        <div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col gap-1.5">
+                        <flux:label class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Outlet
+                        </flux:label>
+                        @if ($selectedOrder->outlet)
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-zinc-800 dark:text-zinc-100 leading-tight truncate">
+                                    {{ $selectedOrder->outlet->name }}
+                                </p>
+                                <p class="text-[10px] text-zinc-500 font-mono">
+                                    {{ $selectedOrder->outlet->code }}
+                                </p>
+                            </div>
+                        @else
+                            <span class="text-xs text-zinc-400 italic">Tidak ditemukan</span>
+                        @endif
+                    </div>
+
+                    <div class="flex flex-col gap-1.5 md:border-l md:pl-4 border-zinc-200/50 dark:border-zinc-700/50">
+                        <flux:label class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Order Type
+                        </flux:label>
+                        <div class="flex-1 flex items-center">
+                            @if ($selectedOrder->order_type)
+                                <flux:badge :color="$selectedOrder->order_type->color()" variant="subtle"
+                                    size="sm" class="font-bold uppercase text-[9px]">
+                                    {{ $selectedOrder->order_type->label() }}
+                                </flux:badge>
+                            @else
+                                <span class="text-xs text-zinc-400">-</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5 border-l pl-4 border-zinc-200/50 dark:border-zinc-700/50">
+                        <flux:label class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Order Status
+                        </flux:label>
+                        <div class="flex-1 flex items-center">
                             <flux:badge :color="$selectedOrder->status?->color() ?? 'zinc'" size="sm"
-                                variant="subtle">
+                                variant="solid" class="font-bold uppercase text-[9px]">
                                 {{ $selectedOrder->status?->label() ?? 'Unknown' }}
                             </flux:badge>
                         </div>
-                    </flux:field>
+                    </div>
 
-                    <flux:field class="col-span-2 md:col-span-1">
-                        <flux:label class="text-[11px] uppercase tracking-wider">Items Count</flux:label>
-                        <p class="text-sm font-medium">{{ $selectedOrder->items->count() }} Produk</p>
-                    </flux:field>
+                    <div class="flex flex-col gap-1.5 border-l pl-4 border-zinc-200/50 dark:border-zinc-700/50">
+                        <flux:label class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Verified By
+                        </flux:label>
+                        <div class="flex items-center">
+                            @if ($selectedOrder->verifier)
+                                <flux:badge color="blue" variant="subtle" size="sm" icon="user-circle"
+                                    class="font-bold uppercase text-[9px]">
+                                    {{ $selectedOrder->verifier->name }}
+                                </flux:badge>
+                            @else
+                                <flux:badge color="zinc" variant="outline" size="sm"
+                                    class="font-bold uppercase text-[9px]">
+                                    -
+                                </flux:badge>
+                            @endif
+                        </div>
+                    </div>
                 </div>
 
                 <div class="space-y-3">
@@ -211,9 +280,9 @@
                                 <tr>
                                     <th class="px-4 py-2.5 text-[11px] font-bold text-zinc-500 uppercase">Produk</th>
                                     <th class="px-4 py-2.5 text-[11px] font-bold text-zinc-500 uppercase text-center">
-                                        Req Qty</th>
+                                        Requested Qty</th>
                                     <th class="px-4 py-2.5 text-[11px] font-bold text-zinc-500 uppercase text-center">
-                                        Appr Qty</th>
+                                        Approved Qty</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -250,7 +319,6 @@
                                                 </span>
                                             @endif
                                         </td>
-
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -273,8 +341,6 @@
 
             <div
                 class="p-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap justify-end gap-3 rounded-b-lg">
-
-
 
                 @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Requested)
                     <flux:modal.trigger name="reject-modal">
@@ -314,7 +380,7 @@
                     </div>
                 @endif
 
-                @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Processed)
+                {{-- @if ($selectedOrder->status === \App\Enums\OrderRequestEnum::Processed)
                     <flux:button variant="primary" color="blue" size="sm" icon="truck"
                         wire:click="markAsDelivering('{{ $selectedOrder->id }}')">
                         Delivering
@@ -326,9 +392,8 @@
                         wire:click="markAsDelivered('{{ $selectedOrder->id }}')">
                         Delivered
                     </flux:button>
-                @endif
+                @endif --}}
             </div>
-
         @endif
     </flux:modal>
 
@@ -411,9 +476,6 @@
             </div>
         </div>
     </flux:modal>
-
-
-
 
     <flux:modal name="bulk-action-modal" class="md:w-[500px]">
         @if ($commonStatus)

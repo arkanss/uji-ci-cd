@@ -69,7 +69,7 @@
     </div>
     <div class="mt-4 text-white">{{ $distributions->links() }}</div>
 
-    <flux:modal name="distribution-modal" class="md:w-[800px]">
+    <flux:modal name="distribution-modal" class="w-full max-w-6xl space-y-0 p-0">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Distribusi Produk Baru</flux:heading>
@@ -91,7 +91,7 @@
                             @endif
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
                             <flux:select label="Merchant" wire:model.live="items.{{ $index }}.merchant_id"
                                 placeholder="Pilih Merchant">
@@ -180,7 +180,7 @@
             <flux:heading size="lg">Distribution Detail</flux:heading>
             <div
                 class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-3 gap-4">
                     <div>
                         <div class="text-xs text-zinc-500 uppercase font-medium">Merchant</div>
                         <div class="text-sm font-bold mt-1 text-white">{{ $selectedItem?->merchant?->name }}</div>
@@ -192,10 +192,10 @@
                             {{ $selectedItem?->status === 1 ? 'Active' : 'Inactive' }}
                         </flux:badge>
                     </div>
-                </div>
-                <div class="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                    <div class="text-xs text-zinc-500 uppercase font-medium">Product</div>
-                    <div class="text-sm mt-1 text-white">{{ $selectedItem?->product?->name }}</div>
+                    <div>
+                        <div class="text-xs text-zinc-500 uppercase font-medium">Product</div>
+                        <div class="text-sm mt-1 text-white">{{ $selectedItem?->product?->name }}</div>
+                    </div>
                 </div>
             </div>
             <div

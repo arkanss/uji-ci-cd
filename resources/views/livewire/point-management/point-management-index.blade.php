@@ -68,7 +68,7 @@
         <div class="mt-4">{{ $points->links() }}</div>
     </div>
 
-    <flux:modal name="point-modal" class="md:w-[900px] space-y-6">
+    <flux:modal name="point-modal" class="w-full max-w-6xl space-y-0 p-0">
         <form wire:submit="save" class="space-y-6">
 
             <div class="pb-4">
@@ -117,7 +117,7 @@
                 </flux:field>
 
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <flux:field>
                         <flux:label>Key</flux:label>
                         <flux:input wire:model="key" />
@@ -129,13 +129,13 @@
                         <flux:input wire:model="name" />
                         <flux:error name="name" />
                     </flux:field>
-                </div>
 
-                <flux:field>
-                    <flux:label>Abbreviation</flux:label>
-                    <flux:input wire:model="abbr" />
-                    <flux:error name="abbr" />
-                </flux:field>
+                    <flux:field>
+                        <flux:label>Abbreviation</flux:label>
+                        <flux:input wire:model="abbr" />
+                        <flux:error name="abbr" />
+                    </flux:field>
+                </div>
 
                 <flux:field>
                     <flux:label>Description</flux:label>

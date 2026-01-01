@@ -24,8 +24,8 @@ class CreatePOIndex extends Component
 
     public $search = '';
     public $selectedId;
-    public $po_number, $date, $warehouse_id, $status, $notes;
-    public $items = []; // repeater: each item ['product_id','requested_stock','unit_id']
+    public $po_number, $date, $warehouse_id, $status;
+    public $items = [];
     public $isEditing = false;
     public $confirmingDeleteId = null;
     public $selectedPO = null;
@@ -91,7 +91,6 @@ class CreatePOIndex extends Component
     {
         $po = PurchaseOrder::with(['items.product', 'items.unit', 'createdBy', 'completedBy'])->findOrFail($id);
 
-        // map items to simple objects for the view
         $items = $po->items->map(function ($it) {
             return (object) [
                 'product_name' => $it->product?->name,
@@ -122,11 +121,9 @@ class CreatePOIndex extends Component
         $this->po_number = $po->po_number;
         $this->warehouse_id = $po->warehouse_id;
         $this->status = $po->status;
-        $this->notes = $po->notes;
         $this->date = $po->date->format('Y-m-d H:i:s');
         $this->isEditing = true;
 
-        // load items
         $this->items = PurchaseOrderItem::where('purchase_order_id', $po->id)
             ->get(['product_id','requested_stock','unit_id'])
             ->map(fn($it)=>[
@@ -140,38 +137,33 @@ class CreatePOIndex extends Component
 
     public function save()
     {
-        // basic validation for header fields (po_number is generated automatically)
         $this->validate([
             'date' => 'required|date',
             'warehouse_id' => 'required',
             'items' => 'array',
         ]);
 
-        // ensure at least one valid item (product_id present)
         $validItems = array_values(array_filter($this->items, fn($it) => !empty($it['product_id'])));
         if (count($validItems) === 0) {
             session()->flash('po_error', 'Please add at least one item before saving.');
             return;
         }
 
-        // validate each item
         $this->validate([
             'items.*.product_id' => 'required',
             'items.*.requested_stock' => 'required|numeric|min:1',
         ]);
 
         DB::transaction(function () use ($validItems) {
-            // generate po_number only when creating a new PO
             $poData = [
                 'date' => \Carbon\Carbon::parse($this->date),
                 'warehouse_id' => $this->warehouse_id,
-                'status' => $this->status ?? 1, // 1 = Requested
+                'status' => $this->status ?? 1,
                 'created_by' => Auth::id(),
             ];
 
             if (empty($this->selectedId)) {
                 $datePart = Carbon::parse($this->date)->format('Ymd');
-                // find last PO for the same date (by po_number prefix) and increment sequence
                 $last = PurchaseOrder::whereDate('created_at', Carbon::parse($this->date)->toDateString())
                     ->where('po_number', 'like', "PO-{$datePart}-%")
                     ->orderBy('po_number', 'desc')
@@ -184,13 +176,11 @@ class CreatePOIndex extends Component
                 }
                 $poNumber = 'PO-' . $datePart . '-' . str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
                 $poData['po_number'] = $poNumber;
-                // keep generated number available in component
                 $this->po_number = $poNumber;
             }
 
             $po = PurchaseOrder::updateOrCreate(['id' => $this->selectedId], $poData);
 
-            // sync items: remove old then insert new (only valid items)
             PurchaseOrderItem::where('purchase_order_id', $po->id)->delete();
 
             foreach ($validItems as $it) {
@@ -211,7 +201,7 @@ class CreatePOIndex extends Component
 
     public function resetForm()
     {
-        $this->reset(['po_number','warehouse_id','selectedId','isEditing','status','notes','items']);
+        $this->reset(['po_number','warehouse_id','selectedId','isEditing','status','items']);
         $this->date = now()->format('Y-m-d H:i:s');
         $this->resetValidation();
     }
@@ -223,11 +213,9 @@ class CreatePOIndex extends Component
             ->orderBy('created_at','desc')
             ->paginate(10);
 
-        // eager load createdBy names manually
         $userIds = $purchaseOrders->pluck('created_by')->filter()->unique()->toArray();
         $users = User::whereIn('id', $userIds)->get()->keyBy('id');
 
-        // load dropdown data
         $warehouses = DB::table('warehouse_addresses')->select('id','name')->get();
         $products = Product::select('id','name')->orderBy('name')->get();
         $units = Unit::whereIn('name', ['Box','Carton','Dozen','Pack','Pieces'])->get();

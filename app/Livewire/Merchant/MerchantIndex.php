@@ -40,6 +40,15 @@ class MerchantIndex extends Component
         return $this->latitude . ', ' . $this->longitude;
     }
 
+    public function previousStep()
+    {
+        if ($this->isEdit) {
+            return; 
+        }
+
+        $this->currentStep = 1;
+    }
+
     private function uploadToApi($file): string
     {
         $client = new Client();
@@ -104,6 +113,8 @@ class MerchantIndex extends Component
         $this->resetFields();
         $this->isEdit = true;
         $this->merchantId = $id;
+
+        $this->currentStep = 2;
 
         $merchant = Merchant::with('user')->where('user_id', $id)->firstOrFail();
         $user = $merchant->user;
@@ -174,7 +185,6 @@ class MerchantIndex extends Component
             }
 
             $locationValue = null;
-            // only set location when both latitude and longitude are non-empty and numeric
             if ($this->latitude !== null && $this->longitude !== null && $this->latitude !== '' && $this->longitude !== '' && is_numeric($this->latitude) && is_numeric($this->longitude)) {
                 $lat = $this->latitude;
                 $lng = $this->longitude;

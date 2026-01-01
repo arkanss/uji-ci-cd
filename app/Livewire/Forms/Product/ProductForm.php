@@ -7,6 +7,7 @@ use Livewire\Form;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\DB;
 
 class ProductForm extends Form
 {
@@ -126,32 +127,38 @@ class ProductForm extends Form
         return $url;
     }
 
-
     public function store()
     {
         $this->validate();
 
-        $data = $this->except(['product', 'image', 'oldImage']);
-        
-        if ($this->image) {
-            $data['image'] = $this->uploadToApi($this->image);
-        }
+        DB::transaction(function () {
+            $data = $this->except(['product', 'image', 'oldImage']);
 
-        Product::create($data);
-        $this->reset(); 
+            if ($this->image) {
+                $data['image'] = $this->uploadToApi($this->image);
+            }
+
+            Product::create($data);
+        });
+
+        $this->reset();
     }
 
     public function update()
     {
         $this->validate();
 
-        $data = $this->except(['product', 'image', 'oldImage']);
+        DB::transaction(function () {
+            $data = $this->except(['product', 'image', 'oldImage']);
 
-        if ($this->image) {
-            $data['image'] = $this->uploadToApi($this->image);
-        }
+            if ($this->image) {
+                $data['image'] = $this->uploadToApi($this->image);
+            }
 
-        $this->product->update($data);
+            $this->product->update($data);
+        });
+
         $this->reset();
     }
+
 }

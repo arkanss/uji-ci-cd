@@ -17,7 +17,7 @@ use App\Models\ProductDistributionPayment;
 use App\Enums\ProductDistributionPaymentStatusEnum;
 
 #[Layout('layouts.app')]
-#[Title('Purchase Order Requests')]
+#[Title('Outlet Order Requests')]
 class PurchaseOrderIndex extends Component
 {
     use WithPagination;
@@ -69,13 +69,18 @@ class PurchaseOrderIndex extends Component
             abort(403);
         }
 
-        $this->verifiablePayment->update([
-            'status' => ProductDistributionPaymentStatusEnum::Paid,
-        ]);
+        DB::transaction(function () {
+            $this->verifiablePayment->update([
+                'status' => ProductDistributionPaymentStatusEnum::Paid,
+            ]);
+        });
 
         $this->verifiablePayment = null;
         $this->modal('payment-modal')->close();
-        $this->dispatch('show-toast', ['message' => 'Payment approved successfully.', 'type' => 'success']);
+        $this->dispatch('show-toast', [
+            'message' => 'Payment approved successfully.',
+            'type' => 'success'
+        ]);
     }
 
     public function rejectPayment()
@@ -91,13 +96,18 @@ class PurchaseOrderIndex extends Component
             abort(403);
         }
 
-        $this->verifiablePayment->update([
-            'status' => ProductDistributionPaymentStatusEnum::Rejected,
-            'reject_reason' => $this->paymentRejectReason,
-        ]);
+        DB::transaction(function () {
+            $this->verifiablePayment->update([
+                'status' => ProductDistributionPaymentStatusEnum::Rejected,
+                'reject_reason' => $this->paymentRejectReason,
+            ]);
+        });
 
         $this->paymentRejectReason = '';
-        $this->dispatch('show-toast', ['message' => 'Payment has been rejected.', 'type' => 'success']);
+        $this->dispatch('show-toast', [
+            'message' => 'Payment has been rejected.',
+            'type' => 'success'
+        ]);
     }
 
     public function showDetail($id)
@@ -121,13 +131,15 @@ class PurchaseOrderIndex extends Component
 
     public function verifyOrder(string $orderId)
     {
-        $order = ProductDistribution::with('items')->findOrFail($orderId);
+        DB::transaction(function () use ($orderId) {
 
-        if ($order->status !== OrderRequestEnum::Requested) {
-            abort(403);
-        }
+            $order = ProductDistribution::with('items')
+                ->lockForUpdate()
+                ->findOrFail($orderId);
 
-        DB::transaction(function () use ($order) {
+            if ($order->status !== OrderRequestEnum::Requested) {
+                abort(403);
+            }
 
             foreach ($order->items as $item) {
                 $approved = $this->approvedStocks[$item->id] ?? 0;
@@ -150,7 +162,10 @@ class PurchaseOrderIndex extends Component
         });
 
         $this->approvedStocks = [];
-        $this->dispatch('show-toast', ['message' => 'Order berhasil diverifikasi!', 'type' => 'success']);
+        $this->dispatch('show-toast', [
+            'message' => 'Order berhasil diverifikasi!',
+            'type' => 'success'
+        ]);
         $this->selectedOrder->refresh();
         $this->modal('detail-modal')->close();
     }
@@ -166,48 +181,67 @@ class PurchaseOrderIndex extends Component
         $order->update([
             'status' => OrderRequestEnum::Processing,
         ]);
+<<<<<<< Updated upstream
         $this->dispatch('show-toast', ['message' => 'Order marked as Processing.', 'type' => 'success']);
         // refresh selected order if open and close modal
         if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
             $this->selectedOrder->refresh();
             $this->modal('detail-modal')->close();
         }
+=======
+
+        $this->selectedOrder?->refresh();
+>>>>>>> Stashed changes
     }
 
     public function assignDriverAndProcess(string $orderId)
     {
         $this->validate([
-            'selectedDriverId' => 'required|not_in:|exists:users,id',
+            'selectedDriverId' => 'required|exists:users,id',
         ]);
 
         $order = ProductDistribution::findOrFail($orderId);
 
         if ($order->status !== OrderRequestEnum::Processing) {
-            abort(403);
+            abort(403, 'Assign driver hanya boleh saat status Processing');
         }
 
         DB::transaction(function () use ($order) {
-
             $delivery = ProductDistributionDeliver::create([
-                'code' => 'DEL-' . now()->format('YmdHis'),
-                'status' => ProductDistributionDeliverEnum::InCompleted,
+                'code' => 'DEL-' . now()->format('YmdHis') . '-' . substr(md5(uniqid()), 0, 4),
+                'status' => ProductDistributionDeliverEnum::Pending,
                 'driver_id' => $this->selectedDriverId,
                 'date' => now(),
             ]);
 
             $order->update([
-                'status' => OrderRequestEnum::Processed,
+                'status' => OrderRequestEnum::Delivering,
                 'product_distribution_delivery_id' => $delivery->id,
+            ]);
+
+            $delivery->update([
+                'status' => ProductDistributionDeliverEnum::InTransit,
             ]);
         });
 
+        $this->selectedOrder->refresh();
         $this->selectedDriverId = null;
+<<<<<<< Updated upstream
         $this->dispatch('show-toast', ['message' => 'Driver assigned and order processed.', 'type' => 'success']);
         if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
             $this->selectedOrder->refresh();
             $this->modal('detail-modal')->close();
         }
+=======
+
+        $this->dispatch('show-toast', [
+            'message' => 'Driver berhasil di-assign.',
+            'type' => 'success'
+        ]);
+>>>>>>> Stashed changes
     }
+
+
 
     public function markAsDelivering(string $id)
     {
@@ -220,11 +254,16 @@ class PurchaseOrderIndex extends Component
         $order->update([
             'status' => OrderRequestEnum::Delivering,
         ]);
+<<<<<<< Updated upstream
         $this->dispatch('show-toast', ['message' => 'Order marked as Delivering.', 'type' => 'success']);
         if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
             $this->selectedOrder->refresh();
             $this->modal('detail-modal')->close();
         }
+=======
+
+        $this->selectedOrder?->refresh();
+>>>>>>> Stashed changes
     }
 
     public function markAsDelivered(string $id)
@@ -243,15 +282,20 @@ class PurchaseOrderIndex extends Component
 
             if ($order->delivery) {
                 $order->delivery->update([
-                    'status' => ProductDistributionDeliverEnum::Completed,
+                    'status' => ProductDistributionDeliverEnum::Delivered,
                 ]);
             }
         });
+<<<<<<< Updated upstream
         $this->dispatch('show-toast', ['message' => 'Order marked as Delivered.', 'type' => 'success']);
         if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
             $this->selectedOrder->refresh();
             $this->modal('detail-modal')->close();
         }
+=======
+
+        $this->selectedOrder?->refresh();
+>>>>>>> Stashed changes
     }
 
     public function rejectOrder($id)
@@ -321,8 +365,6 @@ class PurchaseOrderIndex extends Component
 
     public function bulkVerifyOrders()
     {
-        // For this action, we assume all selected items are in 'Requested' status.
-        // We also need to approve all items with their requested stock.
         $orders = ProductDistribution::with('items')->whereIn('id', $this->selectedOrders)->get();
 
         DB::transaction(function () use ($orders) {
@@ -373,7 +415,7 @@ class PurchaseOrderIndex extends Component
             foreach($orders as $order) {
                 $delivery = ProductDistributionDeliver::create([
                     'code' => 'DEL-' . now()->format('YmdHis') . '-' . substr(md5(uniqid()), 0, 4),
-                    'status' => ProductDistributionDeliverEnum::InCompleted,
+                    'status' => ProductDistributionDeliverEnum::Pending,
                     'driver_id' => $this->selectedDriverId,
                     'date' => now(),
                 ]);
@@ -418,7 +460,7 @@ class PurchaseOrderIndex extends Component
 
                 if ($order->delivery) {
                     $order->delivery->update([
-                        'status' => ProductDistributionDeliverEnum::Completed,
+                        'status' => ProductDistributionDeliverEnum::Delivered,
                     ]);
                 }
             }
@@ -438,11 +480,13 @@ class PurchaseOrderIndex extends Component
     public function render()
     {
         $orders = ProductDistribution::query()
-            ->select('id', 'code', 'status', 'requested_by', 'verified_by', 'created_at')
+            ->select('id', 'code', 'status', 'order_type', 'requested_by', 'verified_by', 'created_at')
             ->where('code', 'like', '%' . $this->search . '%')
             ->with([
+                'outlet:user_id,name,code,address',
                 'requester:id,name',
                 'verifier:id,name',
+                'delivery.driver',
                 'payments' => fn ($q) => $q->orderBy('created_at', 'desc'),
             ]);
 
@@ -465,6 +509,7 @@ class PurchaseOrderIndex extends Component
             'in_process' => $orders->where('status', OrderRequestEnum::Processing),
 
             'delivery' => $orders->whereIn('status', [
+                OrderRequestEnum::Processed,
                 OrderRequestEnum::Delivering,
                 OrderRequestEnum::Delivered,
             ]),

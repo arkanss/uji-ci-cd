@@ -85,7 +85,7 @@
             <div class="mt-4">{{ $purchaseOrders->links() }}</div>
         </div>
 
-        <flux:modal name="receive-po-modal" class="md:w-[900px] space-y-6">
+        <flux:modal name="receive-po-modal" class="w-full max-w-6xl space-y-0 p-0">
             @if ($selectedPO)
                 <div>
                     <flux:heading size="lg">{{ $viewOnly ? 'Purchase Order Detail' : 'Receive Purchase Order' }}
@@ -98,45 +98,55 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded mt-3">
-                    <div>
-                        <div class="text-zinc-500 text-xs">Destination Warehouse</div>
-                        <div class="text-zinc-900 dark:text-zinc-100 font-medium">
-                            {{ \DB::table('warehouse_addresses')->where('id', $selectedPO->warehouse_id)->value('name') ?? '-' }}
-                        </div>
-                    </div>
+                <div class="overflow-x-auto mt-6 mb-6">
+                    <table class="w-full text-left border-collapse">
+                        <thead
+                            class="bg-zinc-50/50 dark:bg-zinc-800/30 
+                                text-[10px] uppercase tracking-wider text-zinc-500 
+                                border-b border-zinc-200 dark:border-zinc-800">
+                            <tr>
+                                <th class="px-4 py-2 font-bold">Destination Warehouse</th>
+                                <th class="px-4 py-2 font-bold">Requested By</th>
+                                <th class="px-4 py-2 font-bold">Status</th>
+                                <th class="px-4 py-2 font-bold">Completed By</th>
+                                <th class="px-4 py-2 font-bold">Completed At</th>
+                            </tr>
+                        </thead>
 
-                    <div>
-                        <div class="text-zinc-500 text-xs">Requested By</div>
-                        <div class="text-zinc-900 dark:text-zinc-100 font-medium">
-                            {{ $selectedPO->createdBy?->name ?? '-' }}</div>
-                    </div>
+                        <tbody class="divide-y divide-zinc-50 dark:divide-zinc-800/50 text-sm">
+                            <tr class="hover:bg-zinc-50/30 dark:hover:bg-zinc-800/20 transition-colors">
 
-                    <div>
-                        <div class="text-zinc-500 text-xs">Status</div>
-                        <div class="mt-1">
-                            @if ($selectedPO->status == 1)
-                                <flux:badge color="yellow">Requested</flux:badge>
-                            @elseif($selectedPO->status == 2)
-                                <flux:badge color="green">Completed</flux:badge>
-                            @else
-                                <flux:badge>Unknown</flux:badge>
-                            @endif
-                        </div>
-                    </div>
+                                <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-200">
+                                    {{ \DB::table('warehouse_addresses')->where('id', $selectedPO->warehouse_id)->value('name') ?? '-' }}
+                                </td>
 
-                    <div>
-                        <div class="text-zinc-500 text-xs">Completed By</div>
-                        <div class="text-zinc-900 dark:text-zinc-100">{{ $selectedPO->completedBy?->name ?? '-' }}
-                        </div>
-                    </div>
+                                <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-200">
+                                    {{ $selectedPO->createdBy?->name ?? '-' }}
+                                </td>
 
-                    <div>
-                        <div class="text-zinc-500 text-xs">Completed At</div>
-                        <div class="text-zinc-900 dark:text-zinc-100">
-                            {{ $selectedPO->completed_at?->format('d M Y, H:i') ?? '-' }}</div>
-                    </div>
+                                <td class="px-4 py-2.5">
+                                    @if ($selectedPO->status == 1)
+                                        <flux:badge color="yellow">Requested</flux:badge>
+                                    @elseif ($selectedPO->status == 2)
+                                        <flux:badge color="green">Completed</flux:badge>
+                                    @else
+                                        <flux:badge>Unknown</flux:badge>
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-200">
+                                    {{ $selectedPO->completedBy?->name ?? '-' }}
+                                </td>
+
+                                <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-200">
+                                    {{ $selectedPO->completed_at?->format('d M Y, H:i') ?? '-' }}
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
+
 
                 <div x-data="{ showAll: false }">
                     <flux:heading size="sm">Items</flux:heading>

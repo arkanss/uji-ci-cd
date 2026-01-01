@@ -7,6 +7,7 @@ use App\Models\WorkerInventoryRequests;
 use App\Enums\DPItemRequestsEnum;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Title;
 
 #[Layout('layouts.app')]
@@ -57,17 +58,19 @@ class DPItemRequestShow extends Component
 
         $this->validate();
 
-        foreach ($this->request->items as $item) {
-            $item->update([
-                'received_stock' => $this->receivedStock[$item->id],
-            ]);
-        }
+        DB::transaction(function () {
+            foreach ($this->request->items as $item) {
+                $item->update([
+                    'received_stock' => $this->receivedStock[$item->id],
+                ]);
+            }
 
-        $this->request->update([
-            'status' => DPItemRequestsEnum::Opened,
-            'opened_at' => now(),
-            'opened_verified_by' => Auth::id(),
-        ]);
+            $this->request->update([
+                'status' => DPItemRequestsEnum::Opened,
+                'opened_at' => now(),
+                'opened_verified_by' => Auth::id(),
+            ]);
+        });
 
         $this->request->refresh();
     }

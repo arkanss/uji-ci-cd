@@ -7,7 +7,7 @@
             </div>
 
             <flux:button variant="primary" icon="plus" wire:click="create">
-                Add PO
+                Add Purchase Order
             </flux:button>
         </div>
 
@@ -20,11 +20,17 @@
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                         <tr>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">PO Number</th>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Created By</th>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Status</th>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Created at</th>
-                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase text-right">Action</th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">PO
+                                Number</th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Created
+                                By</th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Status
+                            </th>
+                            <th class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Created
+                                at</th>
+                            <th
+                                class="px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase text-right">
+                                Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -86,7 +92,7 @@
             <div class="mt-4">{{ $purchaseOrders->links() }}</div>
         </div>
 
-        <flux:modal name="po-modal" class="md:w-[900px] space-y-6">
+        <flux:modal name="po-modal" class="w-full max-w-6xl space-y-0 p-0">
             <form wire:submit.prevent="save" class="space-y-6">
                 <div>
                     <flux:heading size="lg">{{ $selectedId ? 'Update Purchase Order' : 'Create Purchase Order' }}
@@ -101,53 +107,66 @@
 
                     <flux:field>
                         <flux:label>Destination Warehouse</flux:label>
-                        <flux:select wire:model="warehouse_id" placeholder="Select warehouse">
+                        <flux:select wire:model="warehouse_id">
                             <option value="">-- Select Destination Warehouse --</option>
                             @foreach ($warehouses as $w)
                                 <option value="{{ $w->id }}">{{ $w->name }}</option>
                             @endforeach
                         </flux:select>
                     </flux:field>
-
-                    <flux:field>
-                        <flux:label>Notes</flux:label>
-                        <flux:input wire:model="notes" />
-                    </flux:field>
                 </div>
 
                 <div>
-                    <flux:heading size="sm" class="mb-2">Items</flux:heading>
-                    <div class="space-y-3">
-                        <div class="max-h-[55vh] overflow-auto pr-2 space-y-3">
+                    <flux:heading size="sm" class="mb-3">Items</flux:heading>
+
+                    <div class="space-y-4 mt-2">
+                        <div class="max-h-[55vh] overflow-y-auto pr-2 space-y-4">
                             @foreach ($items as $index => $item)
-                                <div class="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg">
-                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
-                                        <div class="md:col-span-6">
+                                <div class="rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-md">
+
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-sm font-medium text-zinc-400">
+                                            Item - {{ $index + 1 }}
+                                        </span>
+
+                                        <flux:button variant="ghost" size="sm"
+                                            class="text-red-400 hover:bg-red-500/10"
+                                            wire:click.prevent="removeItem({{ $index }})">
+                                            Remove
+                                        </flux:button>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                                        <div class="md:col-span-3">
                                             <flux:field>
-                                                <flux:label>Product</flux:label>
+                                                <flux:label class="text-zinc-300">Product</flux:label>
                                                 <flux:select wire:model="items.{{ $index }}.product_id">
                                                     <option value="">-- Select Product --</option>
                                                     @foreach ($products as $p)
-                                                        <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                                        <option value="{{ $p->id }}">{{ $p->name }}
+                                                        </option>
                                                     @endforeach
                                                 </flux:select>
                                             </flux:field>
                                         </div>
+
                                         <div class="md:col-span-3">
                                             <flux:field>
-                                                <flux:label>Requested</flux:label>
-                                                <flux:input type="number"
+                                                <flux:label class="text-zinc-300">Requested</flux:label>
+                                                <flux:input type="number" min="0"
                                                     wire:model="items.{{ $index }}.requested_stock" />
                                             </flux:field>
                                         </div>
-                                        <div class="md:col-span-2">
+
+                                        <div class="md:col-span-3">
                                             <flux:field>
-                                                <flux:label>Unit</flux:label>
+                                                <flux:label class="text-zinc-300">Unit</flux:label>
                                                 <flux:select wire:model="items.{{ $index }}.unit_id">
                                                     <option value="">-- Select Unit --</option>
                                                     @if (isset($units) && $units->isNotEmpty())
                                                         @foreach ($units as $u)
-                                                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                                            <option value="{{ $u->id }}">{{ $u->name }}
+                                                            </option>
                                                         @endforeach
                                                     @else
                                                         <option value="Box">Box</option>
@@ -159,17 +178,15 @@
                                                 </flux:select>
                                             </flux:field>
                                         </div>
-                                        <div class="md:col-span-1 text-right pr-2">
-                                            <flux:button variant="danger" size="sm"
-                                                wire:click.prevent="removeItem({{ $index }})">Remove</flux:button>
-                                        </div>
                                     </div>
                                 </div>
                             @endforeach
                         </div>
 
-                        <div>
-                            <flux:button variant="primary" wire:click.prevent="addItem">Add Item</flux:button>
+                        <div class="pt-2">
+                            <flux:button variant="primary" icon="plus" wire:click.prevent="addItem">
+                                Add Item
+                            </flux:button>
                         </div>
                     </div>
                 </div>
@@ -215,7 +232,7 @@
         </script>
     @endif
 
-    <flux:modal name="detail-po-modal" class="md:w-[700px]">
+    <flux:modal name="detail-po-modal" class="w-full max-w-6xl space-y-0 p-0">
         @if ($selectedPO)
             <div class="space-y-6">
                 <div>
@@ -228,44 +245,47 @@
                         {{ $selectedPO['po']->created_at->format('d M Y, H:i') }}</div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded mt-3">
-                    <div>
-                        <div class="text-zinc-500 text-xs">Destination Warehouse</div>
-                        <div class="text-zinc-900 dark:text-zinc-100 font-medium">
-                            {{ $selectedPO['warehouse'] ?? '-' }}</div>
-                    </div>
+                <div class="overflow-x-auto mt-3">
+                    <table class="w-full text-left border-collapse">
+                        <thead
+                            class="bg-zinc-50/50 dark:bg-zinc-800/30 
+                                text-[10px] uppercase tracking-wider text-zinc-500 
+                                border-b border-zinc-200 dark:border-zinc-800">
+                            <tr>
+                                <th class="px-4 py-2 font-bold">Destination Warehouse</th>
+                                <th class="px-4 py-2 font-bold">Requested By</th>
+                                <th class="px-4 py-2 font-bold">Status</th>
+                                <th class="px-4 py-2 font-bold">Completed By</th>
+                            </tr>
+                        </thead>
 
-                    <div>
-                        <div class="text-zinc-500 text-xs">Requested By</div>
-                        <div class="text-zinc-900 dark:text-zinc-100 font-medium">
-                            {{ $selectedPO['createdBy'] ?? '-' }}</div>
-                    </div>
+                        <tbody class="divide-y divide-zinc-50 dark:divide-zinc-800/50 text-sm">
+                            <tr class="hover:bg-zinc-50/30 dark:hover:bg-zinc-800/20 transition-colors">
+                                <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-200">
+                                    {{ $selectedPO['warehouse'] ?? '-' }}
+                                </td>
 
-                    <div>
-                        <div class="text-zinc-500 text-xs">Status</div>
-                        <div class="mt-1">
-                            @if ($selectedPO['po']->status == 1)
-                                <flux:badge color="yellow">Requested</flux:badge>
-                            @elseif($selectedPO['po']->status == 2)
-                                <flux:badge color="green">Completed</flux:badge>
-                            @else
-                                <flux:badge>Unknown</flux:badge>
-                            @endif
-                        </div>
-                    </div>
+                                <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-200">
+                                    {{ $selectedPO['createdBy'] ?? '-' }}
+                                </td>
 
-                    <div>
-                        <div class="text-zinc-500 text-xs">Completed By</div>
-                        <div class="text-zinc-900 dark:text-zinc-100">{{ $selectedPO['completedBy'] ?? '-' }}</div>
-                    </div>
+                                <td class="px-4 py-2.5">
+                                    @if ($selectedPO['po']->status == 1)
+                                        <flux:badge color="yellow">Requested</flux:badge>
+                                    @elseif ($selectedPO['po']->status == 2)
+                                        <flux:badge color="green">Completed</flux:badge>
+                                    @else
+                                        <flux:badge>Unknown</flux:badge>
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-200">
+                                    {{ $selectedPO['completedBy'] ?? '-' }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-
-                @if ($selectedPO['po']->notes)
-                    <div class="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-4 rounded">
-                        <div class="text-zinc-500 text-xs">Notes</div>
-                        <div class="text-zinc-900 dark:text-zinc-100 mt-1">{{ $selectedPO['po']->notes }}</div>
-                    </div>
-                @endif
 
                 <div>
                     <flux:heading size="sm">Items</flux:heading>

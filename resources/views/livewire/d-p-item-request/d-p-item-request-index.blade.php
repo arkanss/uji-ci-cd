@@ -10,15 +10,15 @@
         </flux:button>
     </div>
 
-    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden">
         <table class="w-full text-left border-collapse">
-            <thead class="bg-zinc-50 dark:bg-zinc-800 border-b">
+            <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                 <tr>
-                    <th class="px-4 py-3 text-xs uppercase">Code</th>
-                    <th class="px-4 py-3 text-xs uppercase">Status</th>
-                    <th class="px-4 py-3 text-xs uppercase">Requested By</th>
-                    <th class="px-4 py-3 text-xs uppercase">Created At</th>
-                    <th class="px-4 py-3 text-xs uppercase text-right">Action</th>
+                    <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Code</th>
+                    <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Status</th>
+                    <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Requested By</th>
+                    <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase">Created At</th>
+                    <th class="px-4 py-3 text-xs font-medium text-zinc-500 uppercase text-right">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">

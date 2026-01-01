@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\WorkerInventoryRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 #[Title('DP Item Requests')]
@@ -53,15 +54,17 @@ class DPItemRequestEdit extends Component
     {
         $this->validate();
 
-        foreach ($this->request->items as $item) {
-            $item->update([
-                'received_stock' => $this->receivedStock[$item->id],
-            ]);
-        }
+        DB::transaction(function () {
+            foreach ($this->request->items as $item) {
+                $item->update([
+                    'received_stock' => $this->receivedStock[$item->id],
+                ]);
+            }
 
-        $this->request->update([
-            'status' => $this->status,
-        ]);
+            $this->request->update([
+                'status' => $this->status,
+            ]);
+        });
 
         session()->flash('success', 'Request updated successfully');
 

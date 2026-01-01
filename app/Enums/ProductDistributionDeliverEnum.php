@@ -4,22 +4,25 @@ namespace App\Enums;
 
 enum ProductDistributionDeliverEnum: int 
 {
-    case Completed = 1;
-    case InCompleted = 2;
+    case Pending = 1;
+    case InTransit = 2;
+    case Delivered = 3;
     
     public function label(): string
     {
         return match ($this){
-            self::Completed => 'Completed',
-            self::InCompleted => 'In Completed',
+            self::Pending => 'Pending',
+            self::InTransit => 'In Transit',
+            self::Delivered  => 'Delivered',
         };
     }
 
     public function color() : string 
     {
         return match ($this) {
-            self::Completed => 'green',
-            self::InCompleted => 'yellowp',
+            self::Pending => 'blue',
+            self::InTransit => 'yellow',
+            self::Delivered => 'green',
         };    
     }
 

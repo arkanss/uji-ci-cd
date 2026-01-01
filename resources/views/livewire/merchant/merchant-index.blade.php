@@ -40,8 +40,8 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200">
                                     @if ($merchant->profile_picture)
-                                        <img src="{{ $merchant->profile_picture }}"
-                                            alt="{{ $merchant->name }}" class="w-full h-full object-cover">
+                                        <img src="{{ $merchant->profile_picture }}" alt="{{ $merchant->name }}"
+                                            class="w-full h-full object-cover">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center text-zinc-400">
                                             <flux:icon icon="user" size="sm" />
@@ -96,7 +96,7 @@
         </table>
     </div>
 
-    <flux:modal name="merchant-form-modal" class="md:w-[800px]">
+    <flux:modal name="merchant-form-modal" class="w-full max-w-6xl space-y-0 p-0">
         @if ($currentStep === 1)
             <div class="space-y-6">
                 <flux:heading size="lg">{{ $isEdit ? 'Data User (Read Only)' : 'Tambah User' }}</flux:heading>
@@ -267,7 +267,11 @@
             </div>
 
             <div class="flex justify-between pt-6 mt-6 border-t">
-                <flux:button variant="ghost" wire:click="previousStep">Kembali ke User</flux:button>
+                @if (!$isEdit)
+                    <flux:button variant="ghost" wire:click="previousStep">
+                        Kembali ke User
+                    </flux:button>
+                @endif
                 <flux:button variant="primary" wire:click="save">
                     {{ $isEdit ? 'Update Data Merchant' : 'Simpan Data Merchant' }}
                 </flux:button>

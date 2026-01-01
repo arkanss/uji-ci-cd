@@ -3,8 +3,9 @@
            w-[260px] lg:w-[280px] min-w-[260px] lg:min-w-[280px]">
 
     <flux:sidebar.header>
-        <flux:sidebar.brand href="#" logo:white="{{ asset('images/logo-black.png') }}"
-            logo:dark="{{ asset('images/logo_white.svg') }}" {{-- name="Local Place" --}} />
+        <flux:sidebar.brand href="#" 
+            logo="{{ asset('images/logo_black.png') }}"
+            logo:dark="{{ asset('images/logo_white.svg') }}"/>
         <flux:sidebar.collapse class="lg:hidden" />
     </flux:sidebar.header>
 
@@ -46,7 +47,7 @@
 
         <flux:sidebar.item icon="document-text" href="{{ route('purchase-orders.index') }}"
             :current="request()->routeIs('purchase-orders.index')">
-            Purchase Order
+            Outlet Orders
         </flux:sidebar.item>
 
         <flux:sidebar.item icon="shopping-cart" href="{{ route('create-po.index') }}"

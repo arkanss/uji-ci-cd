@@ -93,22 +93,24 @@ class OperationalCostIndex extends Component
 
         $cleanAmount = (int) str_replace('.', '', $this->amount);
 
-        $data = [
-            'title' => $this->title,
-            'amount' => $cleanAmount,
-            'date' => $this->date,
-            'created_by' => Auth::id(),
-        ];
+        DB::transaction(function () use ($cleanAmount) {
+            $data = [
+                'title' => $this->title,
+                'amount' => $cleanAmount,
+                'date' => $this->date,
+                'created_by' => Auth::id(),
+            ];
 
-        if ($this->attachment && ! is_string($this->attachment)) {
-            $data['attachments_url'] = $this->uploadToApi($this->attachment);
-        }
+            if ($this->attachment && ! is_string($this->attachment)) {
+                $data['attachments_url'] = $this->uploadToApi($this->attachment);
+            }
 
-        if ($this->editingId) {
-            OperationalCost::find($this->editingId)->update($data);
-        } else {
-            OperationalCost::create($data);
-        }
+            if ($this->editingId) {
+                OperationalCost::findOrFail($this->editingId)->update($data);
+            } else {
+                OperationalCost::create($data);
+            }
+        });
 
         $this->modal('cost-modal')->close();
         $this->resetForm();

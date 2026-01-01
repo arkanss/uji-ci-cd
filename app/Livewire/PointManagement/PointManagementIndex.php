@@ -7,7 +7,6 @@ use App\Enums\PointStatusEnum;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Storage;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -116,31 +115,38 @@ class PointManagementIndex extends Component
     {
         $this->validate();
 
-        $data = [
-            'key' => $this->key,
-            'name' => $this->name,
-            'abbr' => $this->abbr,
-            'description' => $this->description,
-            'value_parent' => $this->value_parent,
-            'value_idr' => $this->value_idr,
-            'parent_id' => $this->parent_id,
-            'status' => $this->status,
-            'is_exchangeable' => $this->is_exchangeable,
-            'scope_service' => $this->scope_service,
-        ];
+        DB::transaction(function () {
+            $data = [
+                'key' => $this->key,
+                'name' => $this->name,
+                'abbr' => $this->abbr,
+                'description' => $this->description,
+                'value_parent' => $this->value_parent,
+                'value_idr' => $this->value_idr,
+                'parent_id' => $this->parent_id,
+                'status' => $this->status,
+                'is_exchangeable' => $this->is_exchangeable,
+                'scope_service' => $this->scope_service,
+            ];
 
-        if ($this->icon) {
-            $data['icon'] = $this->uploadToApi($this->icon);
-        }
+            if ($this->icon) {
+                $data['icon'] = $this->uploadToApi($this->icon);
+            }
 
-        Point::updateOrCreate(['id' => $this->id], $data);
+            Point::updateOrCreate(
+                ['id' => $this->id],
+                $data
+            );
+        });
 
         Flux::modal('point-modal')->close();
         Flux::toast(
-            text: $this->isEditing ? 'Point updated successfully.' : 'Point created successfully.',
+            text: $this->isEditing
+                ? 'Point updated successfully.'
+                : 'Point created successfully.',
             variant: 'success'
         );
-        
+
         $this->resetFields();
     }
 
@@ -160,10 +166,8 @@ class PointManagementIndex extends Component
 
     public function updatedValueIdrDisplay($value)
     {
-        // Remove non-digit characters, except comma and dot
         $clean = preg_replace('/[^0-9]/', '', $value);
         $this->value_idr = $clean === '' ? 0 : (int) $clean;
-        // keep display formatted with thousands separator
         $this->value_idr_display = $clean === '' ? '' : number_format((int)$clean, 0, ',', '.');
     }
 

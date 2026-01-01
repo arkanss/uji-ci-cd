@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Enums\OrderRequestEnum;
+use App\Enums\OrderTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\ProductDistributionPayment;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductDistribution extends Model
 {
@@ -24,14 +26,31 @@ class ProductDistribution extends Model
     protected $fillable = [
         'code',
         'status',
+        'order_type',
         'requested_by',
         'verified_by',
+        'user_id',
+        'merchant_repository_id',
         'reject_reason',
         'product_distribution_delivery_id',
+        'is_paid',
+        'total_price',
+        'total_paid',
+        'pending_price',
+        'estimated_delivery_date',
+        'delivered_at',
+        'proof_of_delivered',
     ];
 
     protected $casts = [
         'status' => OrderRequestEnum::class,
+        'order_type' => OrderTypeEnum::class,
+        'is_paid' => 'boolean',
+        'total_price' => 'decimal:2',
+        'total_paid' => 'decimal:2',
+        'pending_price' => 'integer',
+        'estimated_delivery_date' => 'datetime',
+        'delivered_at' => 'datetime',        
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -56,21 +75,32 @@ class ProductDistribution extends Model
             }
         });
 
-        // When status becomes Delivered, and latest payment is Paid, auto-mark Completed
         static::updated(function ($model) {
             try {
+                $payment = $model->latestPayment();
+
                 if ($model->status === OrderRequestEnum::Delivered) {
-                    $payment = $model->latestPayment();
+
                     if ($payment && $payment->status === \App\Enums\ProductDistributionPaymentStatusEnum::Paid) {
-                        $model->update(['status' => OrderRequestEnum::Completed]);
+
+                        DB::transaction(function () use ($model) {
+
+                            $model = ProductDistribution::lockForUpdate()->find($model->id);
+
+                            if ($model->status === OrderRequestEnum::Delivered) {
+                                $model->update([
+                                    'status' => OrderRequestEnum::Completed,
+                                    'delivered_at' => now(),
+                                ]);
+                            }
+                        });
                     }
                 }
             } catch (\Throwable $e) {
-                // swallow errors to avoid interrupting save flow; optionally log
+                Log::error("Auto complete PO failed: " . $e->getMessage());
             }
         });
     }
-
 
     public function items(): HasMany
     {
@@ -101,6 +131,11 @@ class ProductDistribution extends Model
     public function verifier()
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function outlet()
+    {
+        return $this->belongsTo(Merchant::class, 'user_id', 'user_id');
     }
 
     // Accessor for Filament table: human readable payment status from latest related payment

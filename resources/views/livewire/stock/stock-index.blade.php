@@ -69,7 +69,7 @@
         {{ $stocks->links() }}
     </div>
 
-    <flux:modal name="stock-detail-modal" class="md:w-[500px]">
+    <flux:modal name="stock-detail-modal" class="w-full max-w-6xl space-y-0 p-0">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Product Details</flux:heading>

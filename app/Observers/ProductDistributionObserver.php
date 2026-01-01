@@ -20,7 +20,7 @@ class ProductDistributionObserver
     /**
      * Handle the ProductDistribution "updated" event.
      */
-    public function updated(ProductDistribution $distribution)
+    public function updated(ProductDistribution $distribution): void
     {
         if (! $distribution->isDirty('status')) {
             return;
@@ -32,7 +32,9 @@ class ProductDistributionObserver
         ) {
             DB::transaction(function () use ($distribution) {
 
-                $distribution->load('items.product.stockOverview');
+                $distribution->load([
+                    'items.product.stockOverview' => fn ($q) => $q->lockForUpdate()
+                ]);
 
                 foreach ($distribution->items as $item) {
 
@@ -73,13 +75,15 @@ class ProductDistributionObserver
             });
         }
 
-        elseif (
+        if (
             $distribution->getOriginal('status') === OrderRequestEnum::Delivering &&
             $distribution->status === OrderRequestEnum::Delivered
         ) {
             DB::transaction(function () use ($distribution) {
 
-                $distribution->load('items.product.stockOverview');
+                $distribution->load([
+                    'items.product.stockOverview' => fn ($q) => $q->lockForUpdate()
+                ]);
 
                 foreach ($distribution->items as $item) {
 
@@ -95,17 +99,13 @@ class ProductDistributionObserver
                         );
                     }
 
-                    $before = $stock->stock_in_delivery;
-                    $after  = $before - $item->approved_stock;
-
-                    if ($after < 0) {
+                    if ($stock->stock_in_delivery < $item->approved_stock) {
                         throw new \Exception(
                             "Stock in delivery not enough for {$item->product->name}"
                         );
                     }
 
                     $stock->decrement('stock_in_delivery', $item->approved_stock);
-
                 }
             });
         }

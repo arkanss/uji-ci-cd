@@ -40,7 +40,6 @@ class ReceivePOIndex extends Component
             $query->where('po_number', 'like', "%{$search}%");
         }
 
-        // use regular paginate to show full pagination controls (same look as Create PO)
         $purchaseOrders = $query->paginate(10);
 
         return view('livewire.receive-po.receive-po-index', [

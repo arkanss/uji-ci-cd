@@ -86,20 +86,22 @@ class ProductCategoryIndex extends Component
             'image' => 'nullable|image|max:1024',
         ]);
 
-        $data = [
-            'name' => $this->name,
-            'description' => $this->description,
-        ];
+        DB::transaction(function () {
+            $data = [
+                'name' => $this->name,
+                'description' => $this->description,
+            ];
 
-        if ($this->image) {
-            $data['image'] = $this->uploadToApi($this->image);
-        }
+            if ($this->image) {
+                $data['image'] = $this->uploadToApi($this->image);
+            }
 
-        if ($this->editingCategoryId) {
-            ProductCategory::find($this->editingCategoryId)->update($data);
-        } else {
-            ProductCategory::create($data);
-        }
+            if ($this->editingCategoryId) {
+                ProductCategory::findOrFail($this->editingCategoryId)->update($data);
+            } else {
+                ProductCategory::create($data);
+            }
+        });
 
         $this->resetForm();
         $this->modal('category-modal')->close();

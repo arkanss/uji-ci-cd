@@ -152,10 +152,6 @@
                     </div>
                     <div>
                         <flux:heading size="lg">{{ $selectedUser->name }}</flux:heading>
-                        <code
-                            class="text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded text-zinc-600 dark:text-zinc-400">
-                            {{ $selectedUser->user_code }}
-                        </code>
                     </div>
                 </div>
 

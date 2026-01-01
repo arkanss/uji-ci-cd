@@ -82,7 +82,7 @@
         </div>
     </div>
 
-    <flux:modal name="product-modal" class="md:w-[900px]">
+    <flux:modal name="product-modal" class="w-full max-w-6xl space-y-0 p-0">
         @isset($form)
             <form wire:submit="save" class="flex flex-col h-full max-h-[85vh]">
                 <div class="px-6 py-5 border-b border-zinc-200 dark:border-zinc-700 flex-shrink-0">
@@ -248,7 +248,7 @@
                                 Loyalty & Rewards
                             </h3>
 
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-4 gap-4">
                                 <div class="space-y-2">
                                     <flux:label>Point Value</flux:label>
                                     <flux:input type="number" wire:model="form.point_value" placeholder="0" />
@@ -260,9 +260,6 @@
                                         placeholder="Reward type ID" />
                                     <flux:error name="form.reward_type" />
                                 </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-2">
                                     <flux:label>Level Zero Reward</flux:label>
                                     <flux:input type="number" wire:model="form.level_zero_reward" placeholder="0" />

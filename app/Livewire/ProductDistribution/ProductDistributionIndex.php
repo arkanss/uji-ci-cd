@@ -72,45 +72,65 @@ class ProductDistributionIndex extends Component
         $this->validate([
             'items.*.merchant_id' => 'required',
             'items.*.product_id' => 'required',
-            'items.*.stock' => 'required|integer|min:1', 
+            'items.*.stock' => 'required|integer|min:1',
             'items.*.status' => 'required',
-        ], [
-            'items.*.merchant_id.required' => 'Merchant harus dipilih',
-            'items.*.product_id.required' => 'Produk harus dipilih',
-            'items.*.stock.min' => 'Jumlah stok harus lebih dari 0',
         ]);
 
-        DB::transaction(function () {
-            foreach ($this->items as $index => $item) {
-                $product = Product::findOrFail($item['product_id']);
-                
-                if ($item['stock'] > $product->stock) {
-                    throw new \Exception("Stok produk {$product->name} tidak mencukupi.");
+        try {
+            DB::transaction(function () {
+                foreach ($this->items as $item) {
+
+                    $product = Product::where('id', $item['product_id'])
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    if ($item['stock'] > $product->stock) {
+                        throw new \Exception(
+                            "Stok produk {$product->name} tidak mencukupi."
+                        );
+                    }
+
+                    $product->decrement('stock', $item['stock']);
+
+                    MerchantProduct::create([
+                        'merchant_id' => $item['merchant_id'],
+                        'product_id' => $item['product_id'],
+                        'stock' => $item['stock'],
+                        'total_stock' => $item['stock'],
+                        'status' => $item['status'],
+                    ]);
+
+                    ProductStockHistory::create([
+                        'merchant_id' => $item['merchant_id'],
+                        'product_id' => $item['product_id'],
+                        'stock' => $item['stock'],
+                        'stock_before' => 0,
+                        'stock_after' => $item['stock'],
+                    ]);
                 }
+            });
 
-                $product->decrement('stock', $item['stock']);
+            $this->modal('distribution-modal')->close();
+            $this->resetForm();
 
-                MerchantProduct::create([
-                    'merchant_id' => $item['merchant_id'],
-                    'product_id' => $item['product_id'],
-                    'stock' => $item['stock'],
-                    'total_stock' => $item['stock'],
-                    'status' => $item['status'],
-                ]);
+            $this->dispatch(
+                'toast',
+                variant: 'success',
+                text: 'Distribusi produk berhasil disimpan.'
+            );
 
-                ProductStockHistory::create([
-                    'merchant_id' => $item['merchant_id'],
-                    'product_id' => $item['product_id'],
-                    'stock' => $item['stock'],
-                    'stock_before' => 0, 
-                    'stock_after' => $item['stock'],
-                ]);
-            }
-        });
+        } catch (\Throwable $e) {
 
-        $this->modal('distribution-modal')->close();
-        $this->resetForm();
+            $this->dispatch(
+                'toast',
+                variant: 'danger',
+                text: $e->getMessage()
+            );
+
+            report($e);
+        }
     }
+
 
     public function saveEdit()
     {
@@ -122,8 +142,11 @@ class ProductDistributionIndex extends Component
         ]);
 
         DB::transaction(function () {
-            $mp = MerchantProduct::findOrFail($this->editingId);
-            
+
+            $mp = MerchantProduct::where('id', $this->editingId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
             $oldStock = $mp->stock;
             $newStock = $this->stock;
 
@@ -131,7 +154,7 @@ class ProductDistributionIndex extends Component
                 ProductStockHistory::create([
                     'merchant_id' => $this->merchant_id,
                     'product_id' => $this->product_id,
-                    'stock' => $newStock - $oldStock, 
+                    'stock' => $newStock - $oldStock,
                     'stock_before' => $oldStock,
                     'stock_after' => $newStock,
                 ]);
@@ -140,7 +163,7 @@ class ProductDistributionIndex extends Component
             $mp->update([
                 'merchant_id' => $this->merchant_id,
                 'product_id' => $this->product_id,
-                'stock' => $this->stock,
+                'stock' => $newStock,
                 'status' => $this->status,
             ]);
         });
