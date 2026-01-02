@@ -77,7 +77,5 @@ Route::group(['prefix' => 'finance'], function () {
 
     Route::group(['prefix' => 'operational-cost'], function () {
         Route::get('/', App\Livewire\Finance\OperationalCost\OperationalCostIndex::class)->name('finance.operational-cost.index');
-        Route::get('/create', App\Livewire\Finance\OperationalCost\OperationalCostForm::class)->name('finance.operational-cost.create');
-        Route::get('/{id}/edit', App\Livewire\Finance\OperationalCost\OperationalCostForm::class)->name('finance.operational-cost.edit');
     });
 });
