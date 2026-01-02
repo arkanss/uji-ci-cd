@@ -20,7 +20,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/categories', App\Livewire\ProductCategory\ProductCategoryIndex::class)->name('product-categories.index');
 
 //operational costs
-Route::get('/operational-costs', App\Livewire\Operational\OperationalCostIndex::class)->name('operational-costs.index');
+Route::get('/operational-costs', App\Livewire\Finance\OperationalCost\OperationalCostIndex::class)->name('operational-costs.index');
 
 //purchase orders
 Route::get('/purchase-orders', App\Livewire\PurchaseOrder\PurchaseOrderIndex::class)->name('purchase-orders.index');
@@ -76,6 +76,8 @@ Route::group(['prefix' => 'finance'], function () {
     });
 
     Route::group(['prefix' => 'operational-cost'], function () {
-        Route::get('/', App\Livewire\Operational\OperationalCostIndex::class)->name('finance.operational-cost.index');
+        Route::get('/', App\Livewire\Finance\OperationalCost\OperationalCostIndex::class)->name('finance.operational-cost.index');
+        Route::get('/create', App\Livewire\Finance\OperationalCost\OperationalCostForm::class)->name('finance.operational-cost.create');
+        Route::get('/{id}/edit', App\Livewire\Finance\OperationalCost\OperationalCostForm::class)->name('finance.operational-cost.edit');
     });
 });

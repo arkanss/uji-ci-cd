@@ -9,7 +9,7 @@ use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Http;
-use GuzzleHttp\Client;
+use App\Services\FileUploadService;
 use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
@@ -30,36 +30,8 @@ class ProductCategoryIndex extends Component
 
     private function uploadToApi($file)
     {
-        $client = new \GuzzleHttp\Client();
-
-        $response = $client->post(
-            config('services.file_upload.api_url') . '/file/upload',
-            [
-                'multipart' => [
-                    [
-                        'name'     => 'file',
-                        'contents' => fopen($file->getRealPath(), 'r'),
-                        'filename' => $file->getClientOriginalName(),
-                    ],
-                ],
-            ]
-        );
-
-        if ($response->getStatusCode() !== 200) {
-            throw new \Exception(
-                'Upload image ke API gagal. Status: ' . $response->getStatusCode()
-            );
-        }
-
-        $body = json_decode($response->getBody()->getContents(), true);
-
-        $url = $body['data']['file_url'] ?? null;
-
-        if (! $url) {
-            throw new \Exception('file_url tidak ditemukan di response API');
-        }
-
-        return $url;
+        $uploader = app(FileUploadService::class);
+        return $uploader->upload($file);
     }
 
     public function create()
