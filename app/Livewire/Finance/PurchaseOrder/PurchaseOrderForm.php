@@ -25,11 +25,13 @@ class PurchaseOrderForm extends Component
 
     // Totals Section
     public $subtotal = 0, $total_discount = 0, $tax_total = 0;
-    public $freight_charges = 0, $other_charges = 0, $grand_total = 0;
+    public $freight_charges = null, $other_charges = null, $grand_total = 0;
 
     // Additional Information
     public $internal_notes, $vendor_notes, $reference_number;
     public $approved_by, $approval_date;
+
+    public $warehouse_address, $warehouse_phone, $warehouse_email;
 
     // Line Items
     public $items = [];
@@ -73,6 +75,31 @@ class PurchaseOrderForm extends Component
         $this->internal_notes = $po->internal_notes;
         $this->vendor_notes = $po->vendor_notes;
         $this->reference_number = $po->reference_number;
+        $this->vendor_id = $po->vendor_id;
+        $this->warehouse_id = $po->warehouse_id;
+
+        if ($this->vendor_id) {
+            $vendor = Vendor::find($this->vendor_id);
+            if ($vendor) {
+                $this->vendor_code = $po->vendor_code;
+                $this->vendor_address = $po->vendor_address; 
+                $this->vendor_contact_phone = $po->vendor_contact_phone;
+                $this->vendor_contact_email = $po->vendor_contact_email;
+                $this->currency = $po->currency;
+            }
+        }
+
+        if ($this->warehouse_id) {
+            $warehouse = DB::table('warehouse_addresses')
+                ->where('id', $this->warehouse_id)
+                ->first();
+
+            if ($warehouse) {
+                $this->warehouse_address = $warehouse->address;
+                $this->warehouse_phone   = $warehouse->phone_number;
+                $this->warehouse_email   = $warehouse->email ?? null;
+            }
+        }
 
         $this->items = PurchaseOrderItem::where('purchase_order_id', $po->id)
             ->get()
@@ -99,13 +126,13 @@ class PurchaseOrderForm extends Component
             'product_id' => null,
             'item_description' => '',
             'uom' => '',
-            'requested_stock' => 0,
+            'requested_stock' => null,
             'unit_id' => null,
             'unit_price' => 0,
-            'discount_percent' => 0,
+            'discount_percent' => null,
             'discount_amount' => 0,
             'tax_code' => '',
-            'tax_amount' => 0,
+            'tax_amount' => null,
             'line_total' => 0,
             'requested_delivery_date' => '',
             'warehouse_bin_location' => '',
@@ -122,15 +149,41 @@ class PurchaseOrderForm extends Component
 
     public function updatedVendorId($value)
     {
-        if ($value) {
-            $vendor = Vendor::find($value);
-            if ($vendor) {
-                $this->vendor_code = $vendor->vendor_code;
-                $this->vendor_address = $vendor->billing_address;
-                $this->payment_terms = $vendor->payment_terms;
-                $this->currency = $vendor->currency ?? 'IDR';
-                $this->delivery_terms = $vendor->delivery_terms;
-            }
+        if (!$value) return;
+
+        $vendor = Vendor::find($value);
+        if (!$vendor) return;
+
+        $this->vendor_code = $vendor->vendor_code;
+        $this->vendor_address = $vendor->billing_address;
+
+        if (!$this->poId) {
+            $this->vendor_contact_phone = $vendor->phone;
+            $this->vendor_contact_email = $vendor->email;
+            $this->payment_terms = $vendor->payment_terms;
+            $this->currency = $vendor->currency ?? 'IDR';
+            $this->delivery_terms = $vendor->delivery_terms;
+        }
+    }
+
+
+    public function updatedWarehouseId($value)
+    {
+        if (!$value) {
+            $this->warehouse_address = null;
+            $this->warehouse_phone = null;
+            $this->warehouse_email = null;
+            return;
+        }
+
+        $warehouse = DB::table('warehouse_addresses')
+            ->where('id', $value)
+            ->first();
+
+        if ($warehouse) {
+            $this->warehouse_address = $warehouse->address;
+            $this->warehouse_phone   = $warehouse->phone_number;
+            $this->warehouse_email   = $warehouse->email ?? null;
         }
     }
 

@@ -456,10 +456,16 @@ class PurchaseOrderIndex extends Component
     public function render()
     {
         $orders = ProductDistribution::query()
-            ->select('id', 'code', 'status', 'order_type', 'requested_by', 'verified_by', 'created_at')
+            ->select('id', 'code', 'status', 'order_type', 'requested_by', 'verified_by', 'created_at', 'user_id')
             ->where('code', 'like', '%' . $this->search . '%')
             ->with([
-                'outlet:user_id,name,code,address',
+                'outlet' => function ($q) {
+                    $q->select([
+                        'user_id',
+                        'name',
+                        'code',
+                    ]);
+                },
                 'requester:id,name',
                 'verifier:id,name',
                 'delivery.driver',

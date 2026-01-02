@@ -15,16 +15,25 @@
         open: false,
         selected: @js($value),
         options: @js($options),
-        name: @js($name)
+        model: @js($attributes->wire('model')->value)
     })"
     x-init="
         init();
         $watch('selected', value => {
             if (value !== @js($value)) {
-                $wire.set(name, value, true); // true = defer (optional, but smoother)
+                $wire.set(@js($attributes->wire('model')->value), value, true);
             }
         });
-        $watch('$wire.' + name, value => selected = value);
+        $watch('selected', value => {
+            if (value !== @js($value)) {
+                $wire.set(model, value, true);
+            }
+        });
+
+        $watch(() => $wire.get(model), value => {
+            selected = value;
+        });
+
     "
     @click.away="open = false"
     @keydown.escape.window="open = false"

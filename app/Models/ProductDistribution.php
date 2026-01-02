@@ -135,7 +135,11 @@ class ProductDistribution extends Model
 
     public function outlet()
     {
-        return $this->belongsTo(Merchant::class, 'user_id', 'user_id');
+        return $this->belongsTo(
+            Merchant::class,
+            'user_id', // Foreign Key di product_distributions
+            'user_id'  // Primary Key di merchants
+        );
     }
 
     // Accessor for Filament table: human readable payment status from latest related payment
