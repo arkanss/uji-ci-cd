@@ -23,8 +23,28 @@ class PurchaseOrder extends Model
         'uuid',
         'po_number',
         'date',
+        'expected_delivery_date',
         'warehouse_id',
         'status',
+        'vendor_id',
+        'vendor_code',
+        'vendor_address',
+        'ship_to_address',
+        'currency',
+        'payment_terms',
+        'delivery_terms',
+        'subtotal',
+        'total_discount',
+        'tax_total',
+        'freight_charges',
+        'other_charges',
+        'grand_total',
+        'internal_notes',
+        'vendor_notes',
+        'reference_number',
+        'approved_by',
+        'approval_date',
+        'attachments',
         'created_by',
         'completed_by',
         'completed_at',
@@ -32,7 +52,16 @@ class PurchaseOrder extends Model
 
     protected $casts = [
         'date' => 'datetime',
+        'expected_delivery_date' => 'datetime',
+        'approval_date' => 'datetime',
         'completed_at' => 'datetime',
+        'subtotal' => 'decimal:2',
+        'total_discount' => 'decimal:2',
+        'tax_total' => 'decimal:2',
+        'freight_charges' => 'decimal:2',
+        'other_charges' => 'decimal:2',
+        'grand_total' => 'decimal:2',
+        'attachments' => 'array',
     ];
 
     protected static function boot()
@@ -68,6 +97,16 @@ class PurchaseOrder extends Model
     public function completedBy()
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class, 'vendor_id');
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     /**

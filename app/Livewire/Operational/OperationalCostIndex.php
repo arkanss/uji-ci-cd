@@ -12,7 +12,6 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\DB;
 
-#[Layout('layouts.app')]
 #[Title('Operational Cost')]
 class OperationalCostIndex extends Component
 {
@@ -20,15 +19,15 @@ class OperationalCostIndex extends Component
 
     public $title, $amount, $date, $attachment;
     public $editingId = null;
-    public $isEdit = false; 
-    
+    public $isEdit = false;
+
     public $search = '';
 
     protected $rules = [
         'title' => 'required|min:3',
         'amount' => 'required|numeric',
         'date' => 'required|date',
-        'attachment' => 'nullable|max:2048', 
+        'attachment' => 'nullable|max:2048',
     ];
 
     public function resetForm()
@@ -75,10 +74,10 @@ class OperationalCostIndex extends Component
     {
         $this->resetForm();
         $cost = OperationalCost::findOrFail($id);
-        
+
         $this->editingId = $id;
         $this->isEdit = true;
-        
+
         $this->title = $cost->title;
         $this->amount = $cost->amount;
         $this->date = \Carbon\Carbon::parse($cost->date)->format('Y-m-d');
@@ -140,6 +139,12 @@ class OperationalCostIndex extends Component
 
         $costs = $query->Paginate(10);
 
-        return view('livewire.operational.operational-cost-index', compact('costs'));
+        return view('livewire.operational.operational-cost-index', compact('costs'))->layout('layouts.app', [
+            'breadcrumbs' => breadcrumbs(
+                ['label' => 'Dashboard', 'url' => route('dashboard')],
+                ['label' => 'Finance', 'url' => '#'],
+                ['label' => 'Operational Costs', 'url' => '']
+            ),
+        ]);
     }
 }

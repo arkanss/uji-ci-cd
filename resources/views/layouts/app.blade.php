@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>{{ $title ?? (View::hasSection('title') ? View::getSection('title') : 'Default') }} - {{ config('app.name', 'LocalPlace') }}</title>
 
-   <link rel="icon" type="image/png" href="{{ asset('images/icon-192x192.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/icon-192x192.png') }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @fluxAppearance
@@ -17,13 +17,13 @@
 
     <div class="flex-1 flex flex-col">
 
-        <x-header.main />
+        <x-header.main :breadcrumbs="$breadcrumbs ?? []" />
 
-        <main class="flex-1 p-6 bg-white dark:bg-zinc-800">
+        <main class="flex-1 bg-white dark:bg-zinc-800">
             @if (isset($slot))
-                {{ $slot }}
+            {{ $slot }}
             @else
-                @yield('content')
+            @yield('content')
             @endif
 
             @yield('scripts')

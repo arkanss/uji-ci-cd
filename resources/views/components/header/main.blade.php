@@ -1,4 +1,27 @@
+@props(['breadcrumbs' => []])
+
 <flux:header class="border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    {{-- Breadcrumb --}}
+    @if(isset($breadcrumbs) && count($breadcrumbs) > 0)
+    <nav class="flex items-center space-x-2 text-sm text-zinc-600 dark:text-zinc-400">
+        @foreach($breadcrumbs as $index => $breadcrumb)
+        @if($index > 0)
+        <flux:icon.chevron-right variant="micro" class="text-zinc-400 dark:text-zinc-600" />
+        @endif
+
+        @if(isset($breadcrumb['url']) && !$loop->last)
+        <a href="{{ $breadcrumb['url'] }}" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+            {{ $breadcrumb['label'] }}
+        </a>
+        @else
+        <span class="font-medium text-zinc-900 dark:text-zinc-100">
+            {{ $breadcrumb['label'] }}
+        </span>
+        @endif
+        @endforeach
+    </nav>
+    @endif
+
     <flux:spacer />
 
     {{-- Dark Mode Switcher ditaruh di sini --}}
@@ -19,17 +42,17 @@
 
     <flux:dropdown position="bottom" align="end">
         @php
-            $user = auth('admin')->user(); // penting: guard admin
-            $initial = $user ? strtoupper(substr($user->name, 0, 1)) : null;
-            $avatar = $user?->avatar;
+        $user = auth('admin')->user(); // penting: guard admin
+        $initial = $user ? strtoupper(substr($user->name, 0, 1)) : null;
+        $avatar = $user?->avatar;
         @endphp
 
         <flux:profile avatar="{{ $avatar }}" name="{{ auth()->user()?->name }}">
             @if (!$avatar)
-                <div
-                    class="w-14 h-14 flex items-center justify-center rounded-full bg-gray-400 text-white font-bold text-lg">
-                    {{ $initial }}
-                </div>
+            <div
+                class="w-14 h-14 flex items-center justify-center rounded-full bg-gray-400 text-white font-bold text-lg">
+                {{ $initial }}
+            </div>
             @endif
         </flux:profile>
 

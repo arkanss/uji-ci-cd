@@ -55,9 +55,6 @@ Route::get('/product-distribution', App\Livewire\ProductDistribution\ProductDist
 //challenges
 Route::get('/challenges', App\Livewire\ChallengeManagement\ChallengeManagementIndex::class)->name('challenges.index');
 
-//create po
-Route::get('/create-po', App\Livewire\CreatePO\CreatePOIndex::class)->name('create-po.index');
-
 // receive po
 Route::get('/receive-po', App\Livewire\ReceivePO\ReceivePOIndex::class)->name('receive-po.index');
 
@@ -68,3 +65,17 @@ Route::get('/point-management', App\Livewire\PointManagement\PointManagementInde
 Route::get('/dp-item-requests', App\Livewire\DPItemRequest\DPItemRequestIndex::class)->name('dp-item-requests.index');
 Route::get('/dp-item-requests/{id}', App\Livewire\DPItemRequest\DPItemRequestShow::class)->name('dp-item-requests.show');
 Route::get('/dp-item-requests/{id}/edit', App\Livewire\DPItemRequest\DPItemRequestEdit::class)->name('dp-item-requests.edit');
+
+Route::get('/searchable-select-demo', App\Livewire\SearchableSelectDemo::class)->name('searchable-select-demo');
+
+Route::group(['prefix' => 'finance'], function () {
+    Route::group(['prefix' => 'purchase-order'], function () {
+        Route::get('/', App\Livewire\Finance\PurchaseOrder\PurchaseOrderIndex::class)->name('finance.purchase-order.index');
+        Route::get('/create', App\Livewire\Finance\PurchaseOrder\PurchaseOrderForm::class)->name('finance.purchase-order.create');
+        Route::get('/{id}/edit', App\Livewire\Finance\PurchaseOrder\PurchaseOrderForm::class)->name('finance.purchase-order.edit');
+    });
+
+    Route::group(['prefix' => 'operational-cost'], function () {
+        Route::get('/', App\Livewire\Operational\OperationalCostIndex::class)->name('finance.operational-cost.index');
+    });
+});

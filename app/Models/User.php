@@ -12,7 +12,7 @@ class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
-    
+
     protected $primaryKey = 'id';
     public $incrementing = false; // Not auto-incrementing
     protected $keyType = 'string'; // UUID is string
@@ -65,6 +65,11 @@ class User extends Authenticatable
         return 'password_hash';
     }
 
+    public function isAdmin()
+    {
+        return $this->role === 2;
+    }
+
     public function isAccounting()
     {
         return $this->role === 7;
@@ -73,6 +78,41 @@ class User extends Authenticatable
     public function isAdminWarehouse()
     {
         return $this->role === 8;
+    }
+
+    public function isWarehouse()
+    {
+        return $this->role === 9;
+    }
+
+    public function canAccessMenu($menu)
+    {
+        $permissions = [
+            'dashboard' => [2, 7, 8, 9],
+            'purchase-order' => [2, 7],
+            'operational-cost' => [2, 7],
+            'receive-goods' => [2, 8],
+            'delivery' => [2, 8],
+            'stock' => [2, 8],
+            'outlet-order' => [2, 7, 8],
+            // 'receive_po' => [2, 7],
+            // 'admin' => [2],
+            // 'csv_reports' => [2, 7],
+            // 'operational' => [2, 7, 8],
+            // 'dp_item_requests' => [2, 7, 8],
+            // 'operational_costs' => [2, 7],
+            // 'point_management' => [2, 7],
+            // 'purchase_orders' => [2, 7, 8, 9],
+            // 'merchants' => [2, 7],
+            // 'challenges' => [2, 7],
+            // 'products' => [2, 8, 9],
+            // 'product_categories' => [2, 8, 9],
+            // 'product_rewards' => [2, 7],
+            // 'product_distribution' => [2, 8, 9],
+            // 'product_stock_history' => [2, 8, 9],
+        ];
+
+        return in_array($this->role, $permissions[$menu] ?? []);
     }
 
 

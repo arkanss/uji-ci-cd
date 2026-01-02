@@ -2,7 +2,7 @@
 
 namespace App\Livewire\PurchaseOrder;
 
-use App\Models\ProductDistribution; 
+use App\Models\ProductDistribution;
 use App\Models\ProductDistributionDeliver;
 use App\Models\User;
 use App\Enums\OrderRequestEnum;
@@ -50,7 +50,7 @@ class PurchaseOrderIndex extends Component
     public function showPayment(string $orderId)
     {
         $this->selectedOrder = ProductDistribution::with([
-            'payments' => fn ($q) => $q->orderBy('created_at', 'desc')
+            'payments' => fn($q) => $q->orderBy('created_at', 'desc')
         ])->findOrFail($orderId);
 
         $this->verifiablePayment = $this->selectedOrder
@@ -126,7 +126,6 @@ class PurchaseOrderIndex extends Component
         foreach ($this->selectedOrder->items as $item) {
             $this->approvedStocks[$item->id] = $item->requested_stock;
         }
-
     }
 
     public function verifyOrder(string $orderId)
@@ -181,17 +180,12 @@ class PurchaseOrderIndex extends Component
         $order->update([
             'status' => OrderRequestEnum::Processing,
         ]);
-<<<<<<< Updated upstream
         $this->dispatch('show-toast', ['message' => 'Order marked as Processing.', 'type' => 'success']);
         // refresh selected order if open and close modal
         if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
             $this->selectedOrder->refresh();
             $this->modal('detail-modal')->close();
         }
-=======
-
-        $this->selectedOrder?->refresh();
->>>>>>> Stashed changes
     }
 
     public function assignDriverAndProcess(string $orderId)
@@ -226,19 +220,11 @@ class PurchaseOrderIndex extends Component
 
         $this->selectedOrder->refresh();
         $this->selectedDriverId = null;
-<<<<<<< Updated upstream
         $this->dispatch('show-toast', ['message' => 'Driver assigned and order processed.', 'type' => 'success']);
         if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
             $this->selectedOrder->refresh();
             $this->modal('detail-modal')->close();
         }
-=======
-
-        $this->dispatch('show-toast', [
-            'message' => 'Driver berhasil di-assign.',
-            'type' => 'success'
-        ]);
->>>>>>> Stashed changes
     }
 
 
@@ -254,16 +240,11 @@ class PurchaseOrderIndex extends Component
         $order->update([
             'status' => OrderRequestEnum::Delivering,
         ]);
-<<<<<<< Updated upstream
         $this->dispatch('show-toast', ['message' => 'Order marked as Delivering.', 'type' => 'success']);
         if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
             $this->selectedOrder->refresh();
             $this->modal('detail-modal')->close();
         }
-=======
-
-        $this->selectedOrder?->refresh();
->>>>>>> Stashed changes
     }
 
     public function markAsDelivered(string $id)
@@ -286,16 +267,11 @@ class PurchaseOrderIndex extends Component
                 ]);
             }
         });
-<<<<<<< Updated upstream
         $this->dispatch('show-toast', ['message' => 'Order marked as Delivered.', 'type' => 'success']);
         if ($this->selectedOrder && $this->selectedOrder->id == $order->id) {
             $this->selectedOrder->refresh();
             $this->modal('detail-modal')->close();
         }
-=======
-
-        $this->selectedOrder?->refresh();
->>>>>>> Stashed changes
     }
 
     public function rejectOrder($id)
@@ -333,7 +309,7 @@ class PurchaseOrderIndex extends Component
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
                 ->pluck('id')
-                ->map(fn ($id) => (string) $id)
+                ->map(fn($id) => (string) $id)
                 ->toArray();
             $this->selectAll = true;
         } else {
@@ -412,7 +388,7 @@ class PurchaseOrderIndex extends Component
             ->get();
 
         DB::transaction(function () use ($orders) {
-            foreach($orders as $order) {
+            foreach ($orders as $order) {
                 $delivery = ProductDistributionDeliver::create([
                     'code' => 'DEL-' . now()->format('YmdHis') . '-' . substr(md5(uniqid()), 0, 4),
                     'status' => ProductDistributionDeliverEnum::Pending,
@@ -426,7 +402,7 @@ class PurchaseOrderIndex extends Component
                 ]);
             }
         });
-        
+
         $this->dispatch('show-toast', ['message' => 'Driver telah ditugaskan ke pesanan yang dipilih.', 'type' => 'success']);
         $this->modal('bulk-action-modal')->close();
         $this->selectedOrders = [];
@@ -439,7 +415,7 @@ class PurchaseOrderIndex extends Component
         ProductDistribution::whereIn('id', $this->selectedOrders)
             ->where('status', OrderRequestEnum::Processed)
             ->update(['status' => OrderRequestEnum::Delivering]);
-        
+
         $this->dispatch('show-toast', ['message' => 'Pesanan yang dipilih telah dalam pengiriman.', 'type' => 'success']);
         $this->modal('bulk-action-modal')->close();
         $this->selectedOrders = [];
@@ -450,8 +426,8 @@ class PurchaseOrderIndex extends Component
     {
         $orders = ProductDistribution::with('delivery')->whereIn('id', $this->selectedOrders)->get();
 
-        DB::transaction(function() use ($orders) {
-            foreach($orders as $order) {
+        DB::transaction(function () use ($orders) {
+            foreach ($orders as $order) {
                 if ($order->status !== OrderRequestEnum::Delivering) continue;
 
                 $order->update([
@@ -487,7 +463,7 @@ class PurchaseOrderIndex extends Component
                 'requester:id,name',
                 'verifier:id,name',
                 'delivery.driver',
-                'payments' => fn ($q) => $q->orderBy('created_at', 'desc'),
+                'payments' => fn($q) => $q->orderBy('created_at', 'desc'),
             ]);
 
         match ($this->activeTab) {
