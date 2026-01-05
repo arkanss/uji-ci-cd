@@ -387,24 +387,22 @@ class PurchaseOrderIndex extends Component
             'selectedDriverId' => 'required|not_in:|exists:users,id',
         ]);
 
-        $orders = ProductDistribution::whereIn('id', $this->selectedOrders)
-            ->where('status', OrderRequestEnum::Processing)
-            ->get();
+        $orderIds = $this->selectedOrders;
 
-        DB::transaction(function () use ($orders) {
-            foreach ($orders as $order) {
-                $delivery = ProductDistributionDeliver::create([
-                    'code' => 'DEL-' . now()->format('YmdHis') . '-' . substr(md5(uniqid()), 0, 4),
-                    'status' => ProductDistributionDeliverEnum::Pending,
-                    'driver_id' => $this->selectedDriverId,
-                    'date' => now(),
-                ]);
+        DB::transaction(function () use ($orderIds) {
+            $delivery = ProductDistributionDeliver::create([
+                'code' => 'DEL-' . now()->format('YmdHis') . '-' . substr(md5(uniqid()), 0, 4),
+                'status' => ProductDistributionDeliverEnum::Pending,
+                'driver_id' => $this->selectedDriverId,
+                'date' => now(),
+            ]);
 
-                $order->update([
+            ProductDistribution::whereIn('id', $orderIds)
+                ->where('status', OrderRequestEnum::Processing)
+                ->update([
                     'status' => OrderRequestEnum::Processed,
                     'product_distribution_delivery_id' => $delivery->id,
                 ]);
-            }
         });
 
         $this->dispatch('show-toast', ['message' => 'Driver telah ditugaskan ke pesanan yang dipilih.', 'type' => 'success']);
