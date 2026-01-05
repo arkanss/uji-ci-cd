@@ -40,17 +40,19 @@
                             </flux:badge>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <flux:button size="sm" variant="ghost" icon="eye"
-                                wire:click="showDetail('{{ $delivery->id }}')">
-                                Detail
-                            </flux:button>
+                            <flux:dropdown>
+                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom" />
 
-                            <flux:button size="sm" variant="primary" icon="document"
-                                wire:click="downloadPdf('{{ $delivery->id }}')">
-                                Download PDF
-                            </flux:button>
+                                <flux:menu>
+                                    <flux:menu.item icon="document" wire:click="downloadPdf('{{ $delivery->id }}')">
+                                        Download PDF
+                                    </flux:menu.item>
 
-
+                                    <flux:menu.item icon="eye" wire:click="showDetail('{{ $delivery->id }}')">
+                                        Detail
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </td>
                     </tr>
                 @empty

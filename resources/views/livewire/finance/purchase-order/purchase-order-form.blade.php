@@ -75,7 +75,7 @@
                     </flux:field>
 
                     <flux:field class="col-span-2">
-                        <flux:label>Address</flux:label>
+                        <flux:label>Vendor Address</flux:label>
                         <flux:textarea wire:model="vendor_address" rows="4" placeholder="Address of the vendor" />
                     </flux:field>
 
@@ -107,8 +107,8 @@
 
             {{-- Shipping Information --}}
             <x-ui.card title="Shipping Information">
-                <div class="grid md:grid-cols-2 gap-4">
-                    <flux:field>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <flux:field class="md:col-span-2">
                         <flux:label>Warehouse*</flux:label>
 
                         <x-searchable-select
@@ -123,10 +123,10 @@
                         <flux:error name="warehouse_id" />
                     </flux:field>
 
-                    <flux:field>
+                    {{-- <flux:field>
                         <flux:label>Reference Number</flux:label>
                         <flux:input type="text" wire:model="reference_number" />
-                    </flux:field>
+                    </flux:field> --}}
 
                     <flux:field class="md:col-span-2">
                         <flux:label>Warehouse Address</flux:label>
@@ -242,7 +242,7 @@
 
                                 <div
                                     x-data="{
-                                        raw: @entangle('items.' . $index . '.unit_price').defer,
+                                        raw: @entangle('items.' . $index . '.unit_price').live,
                                         currency: @entangle('currency'),
 
                                         get symbol() {
@@ -254,7 +254,7 @@
                                         },
 
                                         get formatted() {
-                                            if (!this.raw) return '';
+                                            if (this.raw === null || this.raw === '') return '';
                                             return this.raw
                                                 .toString()
                                                 .replace(/\D/g, '')
@@ -263,10 +263,10 @@
 
                                         update(e) {
                                             const val = e.target.value.replace(/\D/g, '');
-                                            this.raw = val === '' ? null : Number(val);
+                                            this.raw = val === '' ? 0 : Number(val);
                                         }
                                     }"
-                                >
+                                    >
                                     <flux:input.group>
                                         <flux:input.group.prefix x-text="symbol"></flux:input.group.prefix>
 

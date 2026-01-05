@@ -126,4 +126,15 @@ class User extends Authenticatable
             }
         });
     }
+
+    public function signatures()
+    {
+        return $this->hasMany(UserSignature::class, 'user_id');
+    }
+
+    public function latestSignature()
+    {
+        return $this->hasOne(UserSignature::class, 'user_id', 'id')
+                    ->orderByDesc('created_at'); // ambil terbaru berdasarkan waktu
+    }
 }

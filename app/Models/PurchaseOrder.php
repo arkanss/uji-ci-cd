@@ -51,6 +51,7 @@ class PurchaseOrder extends Model
     ];
 
     protected $casts = [
+        'status' => \App\Enums\PurchaseOrderStatusEnum::class,
         'date' => 'datetime',
         'expected_delivery_date' => 'datetime',
         'approval_date' => 'datetime',
@@ -108,6 +109,8 @@ class PurchaseOrder extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+    
 
     /**
      * Return items with product and unit eager-loaded.

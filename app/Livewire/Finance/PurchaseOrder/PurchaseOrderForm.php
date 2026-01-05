@@ -77,6 +77,7 @@ class PurchaseOrderForm extends Component
         $this->reference_number = $po->reference_number;
         $this->vendor_id = $po->vendor_id;
         $this->warehouse_id = $po->warehouse_id;
+        $this->calculateTotals();
 
         if ($this->vendor_id) {
             $vendor = Vendor::find($this->vendor_id);
@@ -214,22 +215,31 @@ class PurchaseOrderForm extends Component
         $this->total_discount = 0;
         $this->tax_total = 0;
 
-        foreach ($this->items as $item) {
-            $quantity = (float) ($item['requested_stock'] ?? 0);
-            $unitPrice = (float) ($item['unit_price'] ?? 0);
-            $lineSubtotal = $quantity * $unitPrice;
+        foreach ($this->items as &$item) {
+            $qty = (float) ($item['requested_stock'] ?? 0);
+            $price = (float) ($item['unit_price'] ?? 0);
+            $discountPercent = (float) ($item['discount_percent'] ?? 0);
+
+            $lineSubtotal = $qty * $price;
+            $discountAmount = ($lineSubtotal * $discountPercent) / 100;
+
+            $item['discount_amount'] = round($discountAmount, 2);
 
             $this->subtotal += $lineSubtotal;
-            $this->total_discount += (float) ($item['discount_amount'] ?? 0);
+            $this->total_discount += $item['discount_amount'];
             $this->tax_total += (float) ($item['tax_amount'] ?? 0);
         }
 
-        $freightCharges = (float) ($this->freight_charges ?? 0);
-        $otherCharges = (float) ($this->other_charges ?? 0);
+        $this->grand_total =
+            $this->subtotal
+            - $this->total_discount
+            + $this->tax_total
+            + (float) ($this->freight_charges ?? 0)
+            + (float) ($this->other_charges ?? 0);
 
-        $this->grand_total = $this->subtotal - $this->total_discount + $this->tax_total + $freightCharges + $otherCharges;
         $this->grand_total = round($this->grand_total, 2);
     }
+
 
     public function updated($propertyName)
     {
