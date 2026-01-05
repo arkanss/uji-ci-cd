@@ -36,6 +36,10 @@ class PurchaseOrderIndex extends Component
     public $commonStatus = null;
     public $activeTab = 'all';
 
+    public float $subtotal = 0;
+    public float $total_discount = 0;
+    public float $grand_total = 0;
+
     protected $queryString = [
         'search' => ['except' => ''],
         'activeTab' => ['except' => 'all'],
@@ -209,12 +213,12 @@ class PurchaseOrderIndex extends Component
             ]);
 
             $order->update([
-                'status' => OrderRequestEnum::Delivering,
+                'status' => OrderRequestEnum::Processed,
                 'product_distribution_delivery_id' => $delivery->id,
             ]);
 
             $delivery->update([
-                'status' => ProductDistributionDeliverEnum::InTransit,
+                'status' => ProductDistributionDeliverEnum::Pending,
             ]);
         });
 
