@@ -63,33 +63,45 @@ jobs:
           cache-to: type=gha,mode=max
 
   staging-deploy:
-    runs-on: [self-hosted, dev-sarpras]
+    runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/ci/'))
     steps:
-      - name: ✅ Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🗄️ Remove old image
+      - name: Prepare SSH and rsync
         run: |
-          docker rmi ${{ env.IMAGE_TAG }} || true
+          sudo apt-get update -y
+          sudo apt-get install -y rsync openssh-client
 
-      - name: 🔨 Build new image
+      - name: Setup SSH key (ssh-agent)
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}
+
+      - name: Sync repo to remote
+        env:
+          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
         run: |
-          # Build and tag the image locally so docker-compose can use it
-          docker build -t ${{ env.IMAGE_TAG }} .
+          rsync -az --delete --exclude='.git' --exclude='node_modules' --exclude='vendor' --exclude='storage' -e "ssh -o StrictHostKeyChecking=no" ./ $SSH_TARGET:/home/staging-cms/repo/
 
-      - name: 🧹 Remove dangling images
-        run: docker image prune -f
-
-      - name: 🐳 Deploy using docker-compose
+      - name: Copy docker-compose to remote
+        env:
+          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
         run: |
-          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml down || true
-          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml up -d --build
-          # Run migrations and cache commands inside the app container
-          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml exec -T app php artisan migrate --force || docker compose -p localplace-staging -f .docker/docker-compose.staging.yml run --rm app php artisan migrate --force
-          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml exec -T app php artisan config:cache || true
-          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml exec -T app php artisan route:cache || true
-          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml exec -T app php artisan view:cache || true
+          scp .docker/docker-compose.staging.yml $SSH_TARGET:/home/staging-cms/docker-compose.staging.yml
+
+      - name: Deploy on remote (build & up)
+        env:
+          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
+        run: |
+          ssh $SSH_TARGET "mkdir -p /home/staging-cms && cd /home/staging-cms && mv repo/* . || true"
+          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml up -d --build --remove-orphans"
+          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan migrate --force || docker compose -f docker-compose.staging.yml run --rm app php artisan migrate --force"
+          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan config:cache || true"
+          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan route:cache || true"
+          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan view:cache || true"
 
   # staging-migrate and the old staging-deploy that pulled images from Docker Hub
   # were removed. Staging is handled by `staging-deploy` above which rsyncs the
