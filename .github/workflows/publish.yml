@@ -154,9 +154,9 @@ jobs:
           ssh $SSH_TARGET "docker stack deploy -c /home/staging-cms/docker-compose.staging.yml --detach=false --with-registry-auth --resolve-image=always staging-cms"
 
           # Run post-deployment commands
-          ssh $SSH_TARGET "docker exec \$(docker ps -q -f name=staging-cms_app) php artisan config:cache"
-          ssh $SSH_TARGET "docker exec \$(docker ps -q -f name=staging-cms_app) php artisan route:cache"
-          ssh $SSH_TARGET "docker exec \$(docker ps -q -f name=staging-cms_app) php artisan view:cache"
+          ssh $SSH_TARGET 'CONTAINER_ID=$(docker ps -q -f "name=staging-cms_app" | head -n1) && docker exec $CONTAINER_ID php artisan config:cache'
+          ssh $SSH_TARGET 'CONTAINER_ID=$(docker ps -q -f "name=staging-cms_app" | head -n1) && docker exec $CONTAINER_ID php artisan route:cache'
+          ssh $SSH_TARGET 'CONTAINER_ID=$(docker ps -q -f "name=staging-cms_app" | head -n1) && docker exec $CONTAINER_ID php artisan view:cache'
 
   production-migrate:
     runs-on: ubuntu-latest
@@ -259,6 +259,6 @@ jobs:
           ssh $SSH_TARGET "docker stack deploy -c /home/production-cms/docker-compose.prod.yml --detach=false --with-registry-auth --resolve-image=always cms"
 
           # Run post-deployment commands
-          ssh $SSH_TARGET "docker exec \$(docker ps -q -f name=cms_app) php artisan config:cache"
-          ssh $SSH_TARGET "docker exec \$(docker ps -q -f name=cms_app) php artisan route:cache"
-          ssh $SSH_TARGET "docker exec \$(docker ps -q -f name=cms_app) php artisan view:cache"
+          ssh $SSH_TARGET 'CONTAINER_ID=$(docker ps -q -f "name=cms_app" | head -n1) && docker exec $CONTAINER_ID php artisan config:cache'
+          ssh $SSH_TARGET 'CONTAINER_ID=$(docker ps -q -f "name=cms_app" | head -n1) && docker exec $CONTAINER_ID php artisan route:cache'
+          ssh $SSH_TARGET 'CONTAINER_ID=$(docker ps -q -f "name=cms_app" | head -n1) && docker exec $CONTAINER_ID php artisan view:cache'
