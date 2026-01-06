@@ -214,7 +214,7 @@ jobs:
 
           # Run migrations using a temporary Docker container
           ssh $SSH_TARGET "docker run --rm \
-            --network production-private \
+            --network prod-private \
             -v /home/production-cms/migration/database/migrations:/var/www/html/database/migrations \
             -e DATABASE_URL='$DATABASE_URL' \
             --add-host docker.host.internal:host-gateway \
