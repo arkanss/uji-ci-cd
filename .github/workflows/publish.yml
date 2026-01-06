@@ -63,57 +63,25 @@ jobs:
           cache-to: type=gha,mode=max
 
   staging-deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, docker]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/ci/'))
     steps:
-      - name: Checkout code
+      - name: ✅ Checkout code
         uses: actions/checkout@v4
 
-      - name: Prepare SSH and rsync
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y rsync openssh-client
+      - name: 🗄️ Remove old image
+        run: docker rmi ${{ env.IMAGE_TAG }} || true
 
-      - name: Setup SSH key and ssh-agent
-        run: |
-          if [ -z "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" ]; then
-            echo "ERROR: SSH_LOCALPLACE_KEY_SERVER secret is empty. Configure the private key in repository Secrets." >&2
-            exit 1
-          fi
-          mkdir -p ~/.ssh
-          # If secret contains PEM header, write raw; otherwise assume base64
-          if printf '%s' "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" | grep -q "BEGIN"; then
-            printf '%s\n' "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" > ~/.ssh/id_rsa
-          else
-            echo "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" | base64 --decode > ~/.ssh/id_rsa
-          fi
-          chmod 600 ~/.ssh/id_rsa
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
+      - name: 🔨 Build new image
+        run: docker build -t ${{ env.IMAGE_TAG }} .
 
-      - name: Sync repo to remote
-        env:
-          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
-        run: |
-          rsync -az --delete --exclude='.git' --exclude='node_modules' --exclude='vendor' --exclude='storage' -e "ssh -o StrictHostKeyChecking=no" ./ $SSH_TARGET:/home/staging-cms/repo/
+      - name: 🧹 Remove dangling images
+        run: docker image prune -f
 
-      - name: Copy docker-compose to remote
-        env:
-          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
+      - name: 🐳 Deploy using docker-compose
         run: |
-          scp .docker/docker-compose.staging.yml $SSH_TARGET:/home/staging-cms/docker-compose.staging.yml
-
-      - name: Deploy on remote (build & up)
-        env:
-          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
-        run: |
-          ssh $SSH_TARGET "mkdir -p /home/staging-cms && cd /home/staging-cms && mv repo/* . || true"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml up -d --build --remove-orphans"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan migrate --force || docker compose -f docker-compose.staging.yml run --rm app php artisan migrate --force"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan config:cache || true"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan route:cache || true"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan view:cache || true"
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml down || true
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml up -d --build
 
   # staging-migrate and the old staging-deploy that pulled images from Docker Hub
   # were removed. Staging is handled by `staging-deploy` above which rsyncs the
