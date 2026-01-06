@@ -49,7 +49,6 @@ jobs:
           tags: |
             # Tag for any Git tag (production)
             type=ref,event=tag
-
       - name: Debug metadata
         run: |
           echo "Generated tags: ${{ steps.meta.outputs.tags }}"
