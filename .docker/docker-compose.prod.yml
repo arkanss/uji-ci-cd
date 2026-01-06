@@ -28,15 +28,15 @@ services:
       DB_DATABASE: localplace_production
       DB_USERNAME: localplace_production
       DB_PASSWORD: /run/secrets/production_db_password
-      SESSION_DRIVER: redis
+      SESSION_DRIVER: database
       SESSION_LIFETIME: 120
-      SESSION_ENCRYPT: "false"
+      SESSION_ENCRYPT: false
       SESSION_PATH: /
-      SESSION_DOMAIN: .localplace.id
+      SESSION_DOMAIN: null
       BROADCAST_CONNECTION: log
       FILESYSTEM_DISK: s3
-      QUEUE_CONNECTION: redis
-      CACHE_STORE: redis
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
       REDIS_CLIENT: phpredis
       REDIS_HOST: redis
       REDIS_PASSWORD: null
