@@ -78,16 +78,51 @@ jobs:
       - name: 🧹 Remove dangling images
         run: docker image prune -f
 
-      - name: 🐳 Deploy using docker-compose
+      - name: 🐳 Deploy using docker-compose (runner-friendly)
+        env:
+          STAGING_APP_KEY: ${{ secrets.STAGING_APP_KEY }}
+          STAGING_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
-          # Ensure external networks exist so docker-compose doesn't fail
+          # Write a minimal runner-friendly compose file that avoids Docker secrets
+          cat > .docker/docker-compose.staging.runner.yml <<'YAML'
+          services:
+            app:
+              image: docker.io/localplace/cms-php:latest
+              environment:
+                APP_NAME: "Local Place CMS"
+                APP_ENV: staging
+                APP_DEBUG: "true"
+                APP_KEY: "${STAGING_APP_KEY}"
+                APP_URL: https://demo-cms.localplace.id
+                API_URL: https://demo.localplace.id/api/v1
+                DB_CONNECTION: pgsql
+                DB_HOST: docker.host.internal
+                DB_PORT: 5432
+                DB_DATABASE: localplace_staging
+                DB_USERNAME: localplace_staging
+                DB_PASSWORD: "${STAGING_DB_PASSWORD}"
+                TZ: Asia/Jakarta
+              extra_hosts:
+                - docker.host.internal:host-gateway
+              networks:
+                - traefik-public
+                - staging-private
+          networks:
+            traefik-public:
+              external: true
+            staging-private:
+              external: true
+          YAML
+
+          # Ensure external networks exist
           for NET in traefik-public staging-private; do
             if ! docker network inspect "$NET" >/dev/null 2>&1; then
               docker network create "$NET" || true
             fi
           done
-          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml down || true
-          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml up -d --build
+
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.runner.yml down || true
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.runner.yml up -d --build
 
   # staging-migrate and the old staging-deploy that pulled images from Docker Hub
   # were removed. Staging is handled by `staging-deploy` above which rsyncs the
