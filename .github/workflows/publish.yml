@@ -5,9 +5,7 @@ on:
   push:
     branches:
       - staging
-      - ci/*
-    tags:
-      - "*"
+
 
 env:
   DOCKER_REGISTRY: "docker.io"
