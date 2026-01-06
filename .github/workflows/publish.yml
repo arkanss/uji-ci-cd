@@ -80,6 +80,12 @@ jobs:
 
       - name: 🐳 Deploy using docker-compose
         run: |
+          # Ensure external networks exist so docker-compose doesn't fail
+          for NET in traefik-public staging-private; do
+            if ! docker network inspect "$NET" >/dev/null 2>&1; then
+              docker network create "$NET" || true
+            fi
+          done
           docker compose -p localplace-staging -f .docker/docker-compose.staging.yml down || true
           docker compose -p localplace-staging -f .docker/docker-compose.staging.yml up -d --build
 
