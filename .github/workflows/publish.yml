@@ -63,7 +63,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   staging-deploy:
-    runs-on: [self-hosted, linux, x64, docker]
+    runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/ci/'))
     steps:
       - name: ✅ Checkout code
@@ -88,7 +88,6 @@ jobs:
   # repository to the target and runs `docker compose up --build` there.
 
   production-migrate:
-    runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     steps:
