@@ -63,48 +63,33 @@ jobs:
           cache-to: type=gha,mode=max
 
   staging-deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, dev-sarpras]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/ci/'))
     steps:
-      - name: Checkout code
+      - name: ✅ Checkout code
         uses: actions/checkout@v4
 
-      - name: Prepare SSH and rsync
+      - name: 🗄️ Remove old image
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y rsync openssh-client
+          docker rmi ${{ env.IMAGE_TAG }} || true
 
-      - name: Setup SSH key
+      - name: 🔨 Build new image
         run: |
-          eval "$(ssh-agent -s)"
-          echo "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" | base64 -d -i | tr -d '\r' | ssh-add -
-          mkdir -p ~/.ssh
-          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          # Build and tag the image locally so docker-compose can use it
+          docker build -t ${{ env.IMAGE_TAG }} .
 
-      - name: Sync repo to remote
-        env:
-          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
-        run: |
-          rsync -az --delete --exclude='.git' --exclude='node_modules' --exclude='vendor' --exclude='storage' -e "ssh -o StrictHostKeyChecking=no" ./ $SSH_TARGET:/home/staging-cms/repo/
+      - name: 🧹 Remove dangling images
+        run: docker image prune -f
 
-      - name: Copy docker-compose to remote
-        env:
-          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
+      - name: 🐳 Deploy using docker-compose
         run: |
-          scp .docker/docker-compose.staging.yml $SSH_TARGET:/home/staging-cms/docker-compose.staging.yml
-
-      - name: Deploy on remote (build & up)
-        env:
-          SSH_TARGET: ${{ secrets.SSH_LOCALPLACE_USER_SERVER }}@${{ secrets.SSH_LOCALPLACE_HOST_SERVER }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
-        run: |
-          ssh $SSH_TARGET "mkdir -p /home/staging-cms && cd /home/staging-cms && mv repo/* . || true"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml up -d --build --remove-orphans"
-          # Run migrations and caches inside the service (use compose exec or run)
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan migrate --force || docker compose -f docker-compose.staging.yml run --rm app php artisan migrate --force"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan config:cache || true"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan route:cache || true"
-          ssh $SSH_TARGET "cd /home/staging-cms && docker compose -f docker-compose.staging.yml exec -T app php artisan view:cache || true"
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml down || true
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml up -d --build
+          # Run migrations and cache commands inside the app container
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml exec -T app php artisan migrate --force || docker compose -p localplace-staging -f .docker/docker-compose.staging.yml run --rm app php artisan migrate --force
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml exec -T app php artisan config:cache || true
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml exec -T app php artisan route:cache || true
+          docker compose -p localplace-staging -f .docker/docker-compose.staging.yml exec -T app php artisan view:cache || true
 
   # staging-migrate and the old staging-deploy that pulled images from Docker Hub
   # were removed. Staging is handled by `staging-deploy` above which rsyncs the
