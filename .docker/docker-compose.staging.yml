@@ -6,7 +6,7 @@ services:
     #   dockerfile: Dockerfile
     #   args:
     #     APP_ENV: production
-    image: PLACEHOLDER_IMAGE
+    image: docker.io/localplace/cms-php:latest
     environment:
       APP_NAME: "Local Place CMS"
       APP_ENV: staging
