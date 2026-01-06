@@ -74,10 +74,23 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y rsync openssh-client
 
-      - name: Setup SSH key (ssh-agent)
-        uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}
+      - name: Setup SSH key and ssh-agent
+        run: |
+          if [ -z "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" ]; then
+            echo "ERROR: SSH_LOCALPLACE_KEY_SERVER secret is empty. Configure the private key in repository Secrets." >&2
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          # If secret contains PEM header, write raw; otherwise assume base64
+          if printf '%s' "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" | grep -q "BEGIN"; then
+            printf '%s
+' "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" > ~/.ssh/id_rsa
+          else
+            echo "${{ secrets.SSH_LOCALPLACE_KEY_SERVER }}" | base64 --decode > ~/.ssh/id_rsa
+          fi
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
 
       - name: Sync repo to remote
         env:
